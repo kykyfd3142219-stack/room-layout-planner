@@ -2294,6 +2294,16 @@
       return { x1: clamp(state.room.width - inset - depth, 0, state.room.width), y1: clamp(s, 0, state.room.height), x2: clamp(state.room.width - inset, 0, state.room.width), y2: clamp(e, 0, state.room.height) };
     }
 
+    function wallInteractionDepthCm(it) {
+      if (!it) return 18;
+      if (it.render === "solid") return Math.max(20, Number(it.depth) || 20);
+      if (it.render === "slidingDoor" || it.render === "slideDoor") return DOOR_CLEARANCE_CM;
+      if (it.render === "plug") return 28;
+      if (it.type === "closet") return 26;
+      if (it.type === "window") return 12;
+      return 22;
+    }
+
     function drawCmRect(rect, metrics, fillStyle, strokeStyle = null, dash = []) {
       const x = metrics.left + cmToPx(rect.x1, metrics);
       const y = metrics.top + cmToPx(rect.y1, metrics);
@@ -2750,11 +2760,25 @@
           const h = cmToPx(r.y2 - r.y1, metrics);
           if (pxX >= x && pxX <= x + w && pxY >= y && pxY <= y + h) return it;
         } else if (it.render === "plug") {
+          const plugArea = wallBandRect(it.wall, it.pos, it.pos + it.len, wallInteractionDepthCm(it), 0);
+          const pax = metrics.left + cmToPx(plugArea.x1, metrics);
+          const pay = metrics.top + cmToPx(plugArea.y1, metrics);
+          const paw = cmToPx(plugArea.x2 - plugArea.x1, metrics);
+          const pah = cmToPx(plugArea.y2 - plugArea.y1, metrics);
+          if (pxX >= pax && pxX <= pax + paw && pxY >= pay && pxY <= pay + pah) return it;
           const c = wallCenterPx(it, metrics);
           const dx = pxX - c.x;
           const dy = pxY - c.y;
           if (Math.sqrt(dx * dx + dy * dy) <= 14) return it;
         } else {
+          if (it.type !== "window") {
+            const genericArea = wallBandRect(it.wall, it.pos, it.pos + it.len, wallInteractionDepthCm(it), 0);
+            const gx = metrics.left + cmToPx(genericArea.x1, metrics);
+            const gy = metrics.top + cmToPx(genericArea.y1, metrics);
+            const gw = cmToPx(genericArea.x2 - genericArea.x1, metrics);
+            const gh = cmToPx(genericArea.y2 - genericArea.y1, metrics);
+            if (pxX >= gx && pxX <= gx + gw && pxY >= gy && pxY <= gy + gh) return it;
+          }
           if (isSlidingDoorRender(it.render)) {
             const dragArea = wallBandRect(it.wall, it.pos, it.pos + it.len, DOOR_CLEARANCE_CM, 0);
             const dragX = metrics.left + cmToPx(dragArea.x1, metrics);

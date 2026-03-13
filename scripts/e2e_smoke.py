@@ -232,28 +232,38 @@ def run_checks(page):
     page.click("#add")
     assert page.locator(".list .item").count() >= 3
 
-    # wall elements: sliding door and slide door selectable and addable
-    page.select_option("#wallType", label="引き戸")
-    page.click("#addWall")
-    st2 = wait_status(page)
-    assert "編集中" in st2 or "重な" in st2 or "ロック中" not in st2
-    wall_before = parse_wall_info(text(page.locator("#selectionInfo")))
-    assert wall_before is not None, "wall selection parse failed"
-    wx, wy = canvas_point_for_wall(page, wall_before, offset_cm=35)
-    page.mouse.move(wx, wy)
-    page.mouse.down()
-    if wall_before["wall"] in ["top", "bottom"]:
+    # wall elements: non-window types should be draggable
+    wall_types = ["引き戸", "スライドドア", "テレビプラグ", "物置", "クローゼット"]
+    initial_item_count = page.locator(".list .item").count()
+    for index, wall_label in enumerate(wall_types):
+        page.select_option("#wallType", label=wall_label)
+        if wall_label == "テレビプラグ":
+            page.fill("#wallLen", "24")
+        elif wall_label == "物置":
+            page.fill("#wallLen", "100")
+        elif wall_label == "クローゼット":
+            page.fill("#wallLen", "180")
+        else:
+            page.fill("#wallLen", "90")
+        page.select_option("#wallSide", value="top")
+        page.click("#addWall")
+        st2 = wait_status(page)
+        assert "ロック中" not in st2, f"unexpected lock state while adding wall: {st2}"
+        wall_before = parse_wall_info(text(page.locator("#selectionInfo")))
+        assert wall_before is not None, f"wall selection parse failed for {wall_label}"
+        # keep offset inside expanded interaction zone for non-window wall elements
+        offset_cm = 35 if wall_label in ["引き戸", "スライドドア", "物置"] else 20
+        wx, wy = canvas_point_for_wall(page, wall_before, offset_cm=offset_cm)
+        page.mouse.move(wx, wy)
+        page.mouse.down()
         page.mouse.move(wx + 110, wy, steps=8)
-    else:
-        page.mouse.move(wx, wy + 110, steps=8)
-    page.mouse.up()
-    wall_after = parse_wall_info(text(page.locator("#selectionInfo")))
-    assert wall_after is not None, "wall selection lost during drag"
-    assert wall_after["pos"] != wall_before["pos"], f"wall drag failed: {wall_before} -> {wall_after}"
-
-    page.select_option("#wallType", label="スライドドア")
-    page.click("#addWall")
-    assert page.locator(".list .item").count() >= 5
+        page.mouse.up()
+        wall_after = parse_wall_info(text(page.locator("#selectionInfo")))
+        assert wall_after is not None, f"wall selection lost during drag for {wall_label}"
+        assert wall_after["pos"] != wall_before["pos"], (
+            f"{wall_label} drag failed: {wall_before} -> {wall_after}"
+        )
+        assert page.locator(".list .item").count() >= initial_item_count + index + 1
 
     # room size change affects validation (shrink then oversize add blocked)
     page.fill("#roomW", "180")
