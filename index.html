@@ -333,7 +333,7 @@
           <p>誰でも使いやすい操作に改善した版です</p>
         </div>
         <p class="small">
-          1階 / 2階 / ロフト / ベランダを同時表示し、そのまま編集できます。<br />
+          デフォルトは1階のみ表示。2階 / ロフト / ベランダは追加して同時編集できます。<br />
           レイアウト保存/読込、PNG書き出し、Undo/Redoにも対応しています。
         </p>
 
@@ -351,9 +351,9 @@
         <section class="controls">
           <div class="section-title">フロアブロック</div>
           <div class="block-actions">
-            <button id="addSecondFloor" class="ghost">2階を選択</button>
-            <button id="addLoftBlock" class="ghost">ロフトを選択</button>
-            <button id="addBalconyBlock" class="ghost">ベランダを選択</button>
+            <button id="addSecondFloor" class="ghost">2階ブロック追加</button>
+            <button id="addLoftBlock" class="ghost">ロフトブロック追加</button>
+            <button id="addBalconyBlock" class="ghost">ベランダブロック追加</button>
           </div>
           <div class="block-list" id="blockList"></div>
 
@@ -473,7 +473,7 @@
     <section class="stage">
       <div class="stage-head">
         <span id="activeBlockLabel">編集中: 1階</span>
-        <span>4面同時表示 / グリッド: 10cm</span>
+        <span>追加した面を同時表示 / グリッド: 10cm</span>
       </div>
       <canvas id="room" width="820" height="820" tabindex="0" aria-label="部屋レイアウトキャンバス"></canvas>
     </section>
@@ -529,39 +529,6 @@
           type: "1f",
           label: "1階",
           room: createDefaultRoom(),
-          items: [],
-          wallItems: []
-        },
-        {
-          id: "block-2f",
-          type: "2f",
-          label: "2階",
-          room: createDefaultRoom(),
-          items: [],
-          wallItems: []
-        },
-        {
-          id: "block-loft",
-          type: "loft",
-          label: "ロフト",
-          room: createDefaultRoom(),
-          items: [],
-          wallItems: []
-        },
-        {
-          id: "block-balcony",
-          type: "balcony",
-          label: "ベランダ",
-          room: {
-            width: 364,
-            height: 150,
-            cuts: {
-              tl: { w: 0, h: 0 },
-              tr: { w: 0, h: 0 },
-              br: { w: 0, h: 0 },
-              bl: { w: 0, h: 0 }
-            }
-          },
           items: [],
           wallItems: []
         }
@@ -701,45 +668,58 @@
       return type === "1f" || type === "2f" || type === "loft" || type === "balcony";
     }
 
-    function ensureCoreBlocks() {
-      const required = ["1f", "2f", "loft", "balcony"];
-      const byType = new Map();
+    function normalizeStructureBlocks() {
+      const orderedCoreTypes = ["1f", "2f", "loft", "balcony"];
+      const typedByType = new Map();
       const extras = [];
 
-      for (const block of state.blocks) {
-        if (isCoreBlockType(block.type) && !byType.has(block.type)) byType.set(block.type, block);
-        else extras.push(block);
-      }
-
-      const firstFloor = byType.get("1f");
-      const sourceRoom = firstFloor && firstFloor.room ? firstFloor.room : createDefaultRoom();
-      const nextBlocks = [];
-      for (let i = 0; i < required.length; i++) {
-        const type = required[i];
-        const label = blockLabelByType(type, i);
-        let block = byType.get(type);
-        if (!block) {
-          block = {
-            id: `block-${type}`,
-            type,
-            label,
-            room: defaultRoomForStructure(type, sourceRoom),
-            items: [],
-            wallItems: []
-          };
-        } else {
-          block.type = type;
-          block.label = label;
-          if (!block.room) block.room = defaultRoomForStructure(type, sourceRoom);
-          if (!Array.isArray(block.items)) block.items = [];
-          if (!Array.isArray(block.wallItems)) block.wallItems = [];
+      for (let i = 0; i < state.blocks.length; i++) {
+        const block = state.blocks[i];
+        if (!block || typeof block !== "object") continue;
+        const type = block.type || `block-${i + 1}`;
+        block.type = type;
+        block.label = block.label || blockLabelByType(type, i);
+        if (isCoreBlockType(type)) {
+          if (!typedByType.has(type)) typedByType.set(type, block);
+          continue;
         }
-        nextBlocks.push(block);
+        if (!block.room) block.room = createDefaultRoom();
+        if (!Array.isArray(block.items)) block.items = [];
+        if (!Array.isArray(block.wallItems)) block.wallItems = [];
+        extras.push(block);
       }
 
-      state.blocks = nextBlocks.concat(extras.filter((x) => !isCoreBlockType(x.type)));
+      let firstFloor = typedByType.get("1f");
+      if (!firstFloor) {
+        firstFloor = {
+          id: "block-1f",
+          type: "1f",
+          label: "1階",
+          room: createDefaultRoom(),
+          items: [],
+          wallItems: []
+        };
+        typedByType.set("1f", firstFloor);
+      }
+
+      const sourceRoom = firstFloor.room || createDefaultRoom();
+      const typed = [];
+      for (let i = 0; i < orderedCoreTypes.length; i++) {
+        const type = orderedCoreTypes[i];
+        const block = typedByType.get(type);
+        if (!block) continue;
+        block.type = type;
+        block.label = blockLabelByType(type, i);
+        if (!block.room) block.room = defaultRoomForStructure(type, sourceRoom);
+        if (!Array.isArray(block.items)) block.items = [];
+        if (!Array.isArray(block.wallItems)) block.wallItems = [];
+        typed.push(block);
+      }
+
+      state.blocks = typed.concat(extras);
       if (!state.blocks.some((b) => b.id === state.activeBlockId)) {
-        loadBlockState(state.blocks[0].id, false);
+        const fallback = state.blocks.find((b) => b.type === "1f") || state.blocks[0];
+        if (fallback) loadBlockState(fallback.id, false);
       }
     }
 
@@ -769,7 +749,7 @@
 
     function removeStructureBlock(blockId) {
       const block = state.blocks.find((b) => b.id === blockId);
-      if (!block || isCoreBlockType(block.type)) return;
+      if (!block || block.type === "1f") return;
       rememberCurrentState();
       state.blocks = state.blocks.filter((b) => b.id !== blockId);
       if (state.activeBlockId === blockId) {
@@ -778,7 +758,7 @@
       } else {
         loadBlockState(state.activeBlockId);
       }
-      ensureCoreBlocks();
+      normalizeStructureBlocks();
       update();
       saveToLocalStorage();
       setStatus(`${block.label}ブロックを削除しました。`);
@@ -921,32 +901,31 @@
       };
     }
 
-    function getBlockByType(type) {
-      return state.blocks.find((b) => b.type === type) || null;
-    }
-
     function getViewports() {
       const gap = 12;
-      const cols = 2;
-      const rows = 2;
+      const typeOrder = { "1f": 0, "2f": 1, "loft": 2, "balcony": 3 };
+      const blocks = [...state.blocks].sort((a, b) => {
+        const ao = Object.prototype.hasOwnProperty.call(typeOrder, a.type) ? typeOrder[a.type] : 100;
+        const bo = Object.prototype.hasOwnProperty.call(typeOrder, b.type) ? typeOrder[b.type] : 100;
+        return ao - bo;
+      });
+      if (blocks.length === 0) return [];
+
+      const cols = blocks.length === 1 ? 1 : 2;
+      const rows = blocks.length <= 2 ? 1 : Math.ceil(blocks.length / 2);
       const w = (canvas.width - gap * (cols + 1)) / cols;
       const h = (canvas.height - gap * (rows + 1)) / rows;
-      const layout = [
-        { type: "1f", col: 0, row: 0 },
-        { type: "2f", col: 1, row: 0 },
-        { type: "loft", col: 0, row: 1 },
-        { type: "balcony", col: 1, row: 1 }
-      ];
-      return layout.map((x) => {
-        const block = getBlockByType(x.type);
+      return blocks.map((block, idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
         return {
           block,
-          x: gap + x.col * (w + gap),
-          y: gap + x.row * (h + gap),
+          x: gap + col * (w + gap),
+          y: gap + row * (h + gap),
           w,
           h
         };
-      }).filter((x) => !!x.block);
+      });
     }
 
     function viewportByBlockId(blockId) {
@@ -1032,7 +1011,7 @@
             wallItems: Array.isArray(b.wallItems) ? b.wallItems : []
           };
         });
-        ensureCoreBlocks();
+        normalizeStructureBlocks();
         const fallbackId = state.blocks[0].id;
         const requestedId = snapshot.activeBlockId;
         const activeId = state.blocks.some((b) => b.id === requestedId) ? requestedId : fallbackId;
@@ -1063,7 +1042,7 @@
             wallItems: Array.isArray(snapshot && snapshot.wallItems) ? snapshot.wallItems : []
           }
         ];
-        ensureCoreBlocks();
+        normalizeStructureBlocks();
         loadBlockState("block-1f", false);
         state.selected = snapshot && snapshot.selected ? snapshot.selected : null;
       }
@@ -1161,7 +1140,7 @@
         open.onclick = () => switchToBlock(block.id);
         actions.appendChild(open);
 
-        if (!isCoreBlockType(block.type)) {
+        if (block.type !== "1f") {
           const del = document.createElement("button");
           del.className = "delete";
           del.textContent = "削除";
@@ -1681,7 +1660,7 @@
 
     function update() {
       saveActiveBlockState();
-      ensureCoreBlocks();
+      normalizeStructureBlocks();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const viewports = getViewports();
       for (const viewport of viewports) {
