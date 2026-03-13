@@ -44,6 +44,15 @@ def parse_selection_info(text: str):
     return {"x": x, "y": y, "w": w, "h": h, "angle": a}
 
 
+def parse_wall_info(text: str):
+    # format example: 1階 選択中: 引き戸 / 上壁 / 開始 140cm / 長さ 90cm / 角度 0°
+    m = re.search(r"/\s*(上|右|下|左)壁\s*/\s*開始\s*(\d+)cm\s*/\s*長さ\s*(\d+)cm", text)
+    if not m:
+        return None
+    side_map = {"上": "top", "右": "right", "下": "bottom", "左": "left"}
+    return {"wall": side_map[m.group(1)], "pos": int(m.group(2)), "len": int(m.group(3))}
+
+
 def canvas_point_for_item(page, item):
     data = page.evaluate(
         """
@@ -68,6 +77,49 @@ def canvas_point_for_item(page, item):
         }
         """,
         item,
+    )
+    return data["fx"], data["fy"]
+
+
+def canvas_point_for_wall(page, wall, offset_cm=35):
+    data = page.evaluate(
+        """
+        ({wall, pos, len, offsetCm}) => {
+          const canvas = document.getElementById('room');
+          const roomW = Number(document.getElementById('roomW').value);
+          const roomH = Number(document.getElementById('roomH').value);
+          const attrW = canvas.width;
+          const attrH = canvas.height;
+          const pad = 28;
+          const scale = Math.min((attrW - pad * 2) / roomW, (attrH - pad * 2) / roomH);
+          const widthPx = roomW * scale;
+          const heightPx = roomH * scale;
+          const left = (attrW - widthPx) / 2;
+          const top = (attrH - heightPx) / 2;
+
+          let cx = left;
+          let cy = top;
+          if (wall === 'top') {
+            cx = left + (pos + len / 2) * scale;
+            cy = top + offsetCm * scale;
+          } else if (wall === 'bottom') {
+            cx = left + (pos + len / 2) * scale;
+            cy = top + heightPx - offsetCm * scale;
+          } else if (wall === 'left') {
+            cx = left + offsetCm * scale;
+            cy = top + (pos + len / 2) * scale;
+          } else {
+            cx = left + widthPx - offsetCm * scale;
+            cy = top + (pos + len / 2) * scale;
+          }
+
+          const rect = canvas.getBoundingClientRect();
+          const fx = rect.left + (cx / attrW) * rect.width;
+          const fy = rect.top + (cy / attrH) * rect.height;
+          return {fx, fy};
+        }
+        """,
+        {"wall": wall["wall"], "pos": wall["pos"], "len": wall["len"], "offsetCm": offset_cm},
     )
     return data["fx"], data["fy"]
 
@@ -185,6 +237,19 @@ def run_checks(page):
     page.click("#addWall")
     st2 = wait_status(page)
     assert "編集中" in st2 or "重な" in st2 or "ロック中" not in st2
+    wall_before = parse_wall_info(text(page.locator("#selectionInfo")))
+    assert wall_before is not None, "wall selection parse failed"
+    wx, wy = canvas_point_for_wall(page, wall_before, offset_cm=35)
+    page.mouse.move(wx, wy)
+    page.mouse.down()
+    if wall_before["wall"] in ["top", "bottom"]:
+        page.mouse.move(wx + 110, wy, steps=8)
+    else:
+        page.mouse.move(wx, wy + 110, steps=8)
+    page.mouse.up()
+    wall_after = parse_wall_info(text(page.locator("#selectionInfo")))
+    assert wall_after is not None, "wall selection lost during drag"
+    assert wall_after["pos"] != wall_before["pos"], f"wall drag failed: {wall_before} -> {wall_after}"
 
     page.select_option("#wallType", label="スライドドア")
     page.click("#addWall")

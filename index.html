@@ -2755,11 +2755,29 @@
           const dy = pxY - c.y;
           if (Math.sqrt(dx * dx + dy * dy) <= 14) return it;
         } else {
+          if (isSlidingDoorRender(it.render)) {
+            const dragArea = wallBandRect(it.wall, it.pos, it.pos + it.len, DOOR_CLEARANCE_CM, 0);
+            const dragX = metrics.left + cmToPx(dragArea.x1, metrics);
+            const dragY = metrics.top + cmToPx(dragArea.y1, metrics);
+            const dragW = cmToPx(dragArea.x2 - dragArea.x1, metrics);
+            const dragH = cmToPx(dragArea.y2 - dragArea.y1, metrics);
+            if (pxX >= dragX && pxX <= dragX + dragW && pxY >= dragY && pxY <= dragY + dragH) return it;
+            if (it.render === "slideDoor") {
+              const track = computeSlideTrack(it);
+              const trackArea = wallBandRect(it.wall, track.start, track.end, SLIDE_TRACK_DEPTH_CM, 0);
+              const tx = metrics.left + cmToPx(trackArea.x1, metrics);
+              const ty = metrics.top + cmToPx(trackArea.y1, metrics);
+              const tw = cmToPx(trackArea.x2 - trackArea.x1, metrics);
+              const th = cmToPx(trackArea.y2 - trackArea.y1, metrics);
+              if (pxX >= tx && pxX <= tx + tw && pxY >= ty && pxY <= ty + th) return it;
+            }
+          }
           const s = wallSegmentPx(it, metrics);
-          const minX = Math.min(s.x1, s.x2) - 9;
-          const maxX = Math.max(s.x1, s.x2) + 9;
-          const minY = Math.min(s.y1, s.y2) - 9;
-          const maxY = Math.max(s.y1, s.y2) + 9;
+          const tolerance = isSlidingDoorRender(it.render) ? 14 : 10;
+          const minX = Math.min(s.x1, s.x2) - tolerance;
+          const maxX = Math.max(s.x1, s.x2) + tolerance;
+          const minY = Math.min(s.y1, s.y2) - tolerance;
+          const maxY = Math.max(s.y1, s.y2) + tolerance;
           if (pxX >= minX && pxX <= maxX && pxY >= minY && pxY <= maxY) return it;
         }
       }
