@@ -869,6 +869,7 @@
       wallItems: [],
       selected: null, // { kind: "item" | "wall", id: string }
       drag: null,
+      pendingNotice: "",
       gridCm: 10,
       snapEnabled: true,
       blocks: [
@@ -2013,6 +2014,49 @@
       return item;
     }
 
+    function fitItemIntoRoom(item) {
+      const maxW = Math.max(1, state.room.width);
+      const maxH = Math.max(1, state.room.height);
+      const minW = Math.min(30, maxW);
+      const minH = Math.min(30, maxH);
+      const fallbackStep = state.snapEnabled ? currentGridCm() : 5;
+      const step = Math.max(1, fallbackStep);
+
+      item.w = clampAndSnap(Number(item.w) || minW, minW, maxW);
+      item.h = clampAndSnap(Number(item.h) || minH, minH, maxH);
+      item.x = Number.isFinite(item.x) ? item.x : 0;
+      item.y = Number.isFinite(item.y) ? item.y : 0;
+
+      let pos = findNearestValidPosition(item.w, item.h, item.x, item.y);
+      if (pos) {
+        item.x = pos.x;
+        item.y = pos.y;
+        return { ok: true, resized: false };
+      }
+
+      const originalW = item.w;
+      const originalH = item.h;
+      const wCandidates = [];
+      const hCandidates = [];
+      for (let w = originalW; w >= minW; w -= step) wCandidates.push(clampAndSnap(w, minW, maxW));
+      for (let h = originalH; h >= minH; h -= step) hCandidates.push(clampAndSnap(h, minH, maxH));
+      if (!wCandidates.includes(minW)) wCandidates.push(minW);
+      if (!hCandidates.includes(minH)) hCandidates.push(minH);
+
+      for (const h of hCandidates) {
+        for (const w of wCandidates) {
+          pos = findNearestValidPosition(w, h, item.x, item.y);
+          if (!pos) continue;
+          item.w = w;
+          item.h = h;
+          item.x = pos.x;
+          item.y = pos.y;
+          return { ok: true, resized: w !== originalW || h !== originalH };
+        }
+      }
+      return { ok: false, resized: false };
+    }
+
     function normalizeToRoom() {
       const step = currentGridCm();
       state.wallItems = state.wallItems.filter((it) => {
@@ -2031,13 +2075,24 @@
         return true;
       });
 
-      for (const it of state.items) {
-        if (it.w > state.room.width || it.h > state.room.height) continue;
-        const pos = findNearestValidPosition(it.w, it.h, it.x, it.y);
-        if (pos) {
-          it.x = pos.x;
-          it.y = pos.y;
+      let resizedCount = 0;
+      let removedCount = 0;
+      state.items = state.items.filter((it) => {
+        const result = fitItemIntoRoom(it);
+        if (!result.ok) {
+          removedCount += 1;
+          return false;
         }
+        if (result.resized) resizedCount += 1;
+        return true;
+      });
+      if (state.selected && state.selected.kind === "item" && !state.items.some((it) => it.id === state.selected.id)) {
+        state.selected = null;
+      }
+      if (removedCount > 0) {
+        state.pendingNotice = `部屋形状に収まらない家具 ${removedCount} 件を自動的に除外しました。`;
+      } else if (resizedCount > 0) {
+        state.pendingNotice = `家具 ${resizedCount} 件を部屋サイズに合わせて自動調整しました。`;
       }
     }
 
@@ -2645,6 +2700,10 @@
       gridInfoEl.textContent = `追加した面を同時表示 / グリッド: ${currentGridCm()}cm / スナップ${state.snapEnabled ? "ON" : "OFF"}`;
       const conflicts = detectConflicts();
       if (conflicts.length > 0) setStatus(conflicts[0], true);
+      else if (state.pendingNotice) {
+        setStatus(state.pendingNotice);
+        state.pendingNotice = "";
+      }
       else if (active && active.locked) setStatus(`${active.label}ブロックはロック中です。表示・確認のみ可能です。`);
       else setStatus(`${active ? active.label : "1階"}ブロックを編集中です。`);
     }
