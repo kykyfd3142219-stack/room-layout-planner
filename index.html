@@ -2653,6 +2653,33 @@
 
     function detectConflicts() {
       const out = [];
+
+      // Priority warnings: only for sliding door types (引き戸 / スライドドア).
+      for (const furniture of state.items) {
+        const fr = rectOfItem(furniture);
+        for (const wall of state.wallItems) {
+          if (!isSlidingDoorRender(wall.render)) continue;
+
+          const thresholdRect = wallBandRect(wall.wall, wall.pos, wall.pos + wall.len, 8, 0);
+          if (thresholdRect && overlap(fr, thresholdRect)) {
+            out.push(`${furniture.name} が ${wall.name} の敷居に重なっています`);
+          }
+
+          if (wall.render === "slidingDoor") {
+            const travelRect = wallBandRect(wall.wall, wall.pos, wall.pos + wall.len, DOOR_CLEARANCE_CM, 0);
+            if (travelRect && overlap(fr, travelRect)) {
+              out.push(`${furniture.name} が ${wall.name} の可動軌道に重なっています`);
+            }
+          } else if (wall.render === "slideDoor") {
+            const track = computeSlideTrack(wall);
+            const trackRect = wallBandRect(wall.wall, track.start, track.end, SLIDE_TRACK_DEPTH_CM, 0);
+            if (trackRect && trackRect.x2 > trackRect.x1 && trackRect.y2 > trackRect.y1 && overlap(fr, trackRect)) {
+              out.push(`${furniture.name} が ${wall.name} の可動軌道に重なっています`);
+            }
+          }
+        }
+      }
+
       for (let i = 0; i < state.items.length; i++) {
         const a = state.items[i];
         const ra = rectOfItem(a);

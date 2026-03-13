@@ -265,6 +265,46 @@ def run_checks(page):
         )
         assert page.locator(".list .item").count() >= initial_item_count + index + 1
 
+    # warnings for door threshold / trajectory (only sliding door types)
+    page.once("dialog", lambda d: d.accept())
+    page.click("#clear")
+    page.select_option("#wallType", label="引き戸")
+    page.select_option("#wallSide", value="top")
+    page.fill("#wallLen", "90")
+    page.click("#addWall")
+    warning_wall = parse_wall_info(text(page.locator("#selectionInfo")))
+    assert warning_wall is not None
+    page.fill("#w", "60")
+    page.fill("#h", "60")
+    page.click("#add")
+    page.fill("#selX", str(warning_wall["pos"]))
+    page.fill("#selY", "0")
+    page.click("#applySelection")
+    warning_status = wait_status(page)
+    assert ("可動軌道" in warning_status) or ("敷居" in warning_status), (
+        f"door warning not shown: {warning_status}"
+    )
+
+    # non-door wall elements should not trigger the same warning
+    page.once("dialog", lambda d: d.accept())
+    page.click("#clear")
+    page.select_option("#wallType", label="窓")
+    page.select_option("#wallSide", value="top")
+    page.fill("#wallLen", "90")
+    page.click("#addWall")
+    non_warning_wall = parse_wall_info(text(page.locator("#selectionInfo")))
+    assert non_warning_wall is not None
+    page.fill("#w", "60")
+    page.fill("#h", "60")
+    page.click("#add")
+    page.fill("#selX", str(non_warning_wall["pos"]))
+    page.fill("#selY", "0")
+    page.click("#applySelection")
+    non_warning_status = wait_status(page)
+    assert ("可動軌道" not in non_warning_status) and ("敷居" not in non_warning_status), (
+        f"non-door warning should not appear: {non_warning_status}"
+    )
+
     # room size change affects validation (shrink then oversize add blocked)
     page.fill("#roomW", "180")
     page.fill("#roomH", "180")
@@ -281,8 +321,9 @@ def run_checks(page):
     page.click("#applyRoom")
     page.fill("#w", "220")
     page.fill("#h", "100")
+    before_count = page.locator(".list .item").count()
     page.click("#add")
-    assert page.locator(".list .item").count() >= 6
+    assert page.locator(".list .item").count() == before_count + 1
 
     # regression: existing oversized furniture should be auto-fitted and remain movable
     page.fill("#w", "220")
