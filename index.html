@@ -93,6 +93,54 @@
     .quick-actions .full {
       grid-column: 1 / -1;
     }
+    .block-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .block-list {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px;
+      background: #f8fafc;
+      display: grid;
+      gap: 6px;
+    }
+    .block-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: #fff;
+      font-size: 0.82rem;
+    }
+    .block-item.active {
+      border-color: #0f766e;
+      box-shadow: inset 0 0 0 1px #0f766e;
+      background: #f0fdfa;
+    }
+    .block-name {
+      font-weight: 700;
+      color: #1f2937;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .block-actions-inline {
+      display: flex;
+      gap: 6px;
+    }
+    .block-actions-inline button {
+      font-size: 0.75rem;
+      padding: 4px 7px;
+      background: #334155;
+    }
+    .block-actions-inline button.delete {
+      background: #be123c;
+    }
     .controls {
       display: grid;
       gap: 8px;
@@ -271,6 +319,7 @@
       .app { grid-template-columns: 1fr; }
       .panel-inner { max-height: none; }
       .quick-actions { grid-template-columns: 1fr; }
+      .block-actions { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -300,6 +349,13 @@
         </div>
 
         <section class="controls">
+          <div class="section-title">フロアブロック</div>
+          <div class="block-actions">
+            <button id="addSecondFloor" class="ghost">2階ブロック追加</button>
+            <button id="addLoftBlock" class="ghost">ロフトブロック追加</button>
+          </div>
+          <div class="block-list" id="blockList"></div>
+
           <details open>
             <summary>部屋設定</summary>
             <div class="details-body">
@@ -415,7 +471,7 @@
 
     <section class="stage">
       <div class="stage-head">
-        <span>キャンバス操作: ドラッグで配置、選択してキーボード微調整</span>
+        <span id="activeBlockLabel">編集中: 1階</span>
         <span>グリッド: 10cm</span>
       </div>
       <canvas id="room" width="820" height="820" tabindex="0" aria-label="部屋レイアウトキャンバス"></canvas>
@@ -423,6 +479,19 @@
   </main>
 
   <script>
+    function createDefaultRoom() {
+      return {
+        width: 364,
+        height: 364,
+        cuts: {
+          tl: { w: 0, h: 0 },
+          tr: { w: 0, h: 0 },
+          br: { w: 0, h: 0 },
+          bl: { w: 0, h: 0 }
+        }
+      };
+    }
+
     const presets = [
       { name: "シングルベッド", w: 100, h: 200, color: "#f97316" },
       { name: "ダブルベッド", w: 140, h: 200, color: "#ea580c" },
@@ -430,8 +499,6 @@
       { name: "デスク", w: 120, h: 60, color: "#22c55e" },
       { name: "デスクチェア", w: 60, h: 60, color: "#15803d" },
       { name: "階段", w: 90, h: 180, color: "#8b5e3c" },
-      { name: "ロフト", w: 220, h: 160, color: "#4b5563" },
-      { name: "2階スペース", w: 240, h: 180, color: "#64748b" },
       { name: "カーペット", w: 180, h: 140, color: "#c2410c" },
       { name: "本棚", w: 90, h: 30, color: "#6366f1" },
       { name: "ローテーブル", w: 100, h: 50, color: "#eab308" },
@@ -450,20 +517,22 @@
     const ctx = canvas.getContext("2d");
 
     const state = {
-      room: {
-        width: 364,
-        height: 364,
-        cuts: {
-          tl: { w: 0, h: 0 },
-          tr: { w: 0, h: 0 },
-          br: { w: 0, h: 0 },
-          bl: { w: 0, h: 0 }
-        }
-      },
+      room: createDefaultRoom(),
       items: [],
       wallItems: [],
       selected: null, // { kind: "item" | "wall", id: string }
-      drag: null
+      drag: null,
+      blocks: [
+        {
+          id: "block-1f",
+          type: "1f",
+          label: "1階",
+          room: createDefaultRoom(),
+          items: [],
+          wallItems: []
+        }
+      ],
+      activeBlockId: "block-1f"
     };
     const history = {
       past: [],
@@ -497,6 +566,10 @@
     const wallSideEl = document.getElementById("wallSide");
     const wallLenEl = document.getElementById("wallLen");
     const addWallEl = document.getElementById("addWall");
+    const addSecondFloorEl = document.getElementById("addSecondFloor");
+    const addLoftBlockEl = document.getElementById("addLoftBlock");
+    const blockListEl = document.getElementById("blockList");
+    const activeBlockLabelEl = document.getElementById("activeBlockLabel");
     const undoEl = document.getElementById("undo");
     const redoEl = document.getElementById("redo");
     const downloadJsonEl = document.getElementById("downloadJson");
@@ -520,6 +593,90 @@
 
     function clamp(v, min, max) {
       return Math.min(max, Math.max(min, v));
+    }
+
+    function deepCopy(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function getActiveBlock() {
+      return state.blocks.find((b) => b.id === state.activeBlockId) || state.blocks[0];
+    }
+
+    function saveActiveBlockState() {
+      const block = getActiveBlock();
+      if (!block) return;
+      block.room = deepCopy(state.room);
+      block.items = deepCopy(state.items);
+      block.wallItems = deepCopy(state.wallItems);
+    }
+
+    function loadBlockState(blockId, resetSelection = true) {
+      const block = state.blocks.find((b) => b.id === blockId);
+      if (!block) return false;
+      state.activeBlockId = block.id;
+      state.room = deepCopy(block.room);
+      state.items = deepCopy(block.items || []);
+      state.wallItems = deepCopy(block.wallItems || []);
+      state.drag = null;
+      if (resetSelection) state.selected = null;
+      roomWEl.value = String(state.room.width);
+      roomHEl.value = String(state.room.height);
+      setShapeInputsFromState();
+      normalizeToRoom();
+      saveActiveBlockState();
+      return true;
+    }
+
+    function switchToBlock(blockId) {
+      if (blockId === state.activeBlockId) return;
+      rememberCurrentState();
+      if (loadBlockState(blockId)) {
+        update();
+        saveToLocalStorage();
+      }
+    }
+
+    function addStructureBlock(type) {
+      const label = type === "2f" ? "2階" : "ロフト";
+      const existing = state.blocks.find((b) => b.type === type);
+      if (existing) {
+        switchToBlock(existing.id);
+        setStatus(`${label}ブロックに切り替えました。`);
+        return;
+      }
+      rememberCurrentState();
+      const firstFloor = state.blocks.find((b) => b.type === "1f");
+      const source = firstFloor ? firstFloor.room : state.room;
+      const block = {
+        id: crypto.randomUUID(),
+        type,
+        label,
+        room: deepCopy(source),
+        items: [],
+        wallItems: []
+      };
+      state.blocks.push(block);
+      loadBlockState(block.id);
+      update();
+      saveToLocalStorage();
+      setStatus(`${label}ブロックを追加しました。`);
+    }
+
+    function removeStructureBlock(blockId) {
+      const block = state.blocks.find((b) => b.id === blockId);
+      if (!block || block.type === "1f") return;
+      rememberCurrentState();
+      state.blocks = state.blocks.filter((b) => b.id !== blockId);
+      if (state.activeBlockId === blockId) {
+        const fallback = state.blocks.find((b) => b.type === "1f") || state.blocks[0];
+        if (fallback) loadBlockState(fallback.id);
+      } else {
+        loadBlockState(state.activeBlockId);
+      }
+      update();
+      saveToLocalStorage();
+      setStatus(`${block.label}ブロックを削除しました。`);
     }
 
     function snap(v) {
@@ -672,37 +829,68 @@
     }
 
     function sceneSnapshot() {
-      return JSON.parse(JSON.stringify({
-        room: state.room,
-        items: state.items,
-        wallItems: state.wallItems,
+      saveActiveBlockState();
+      return deepCopy({
+        blocks: state.blocks,
+        activeBlockId: state.activeBlockId,
         selected: state.selected
-      }));
+      });
     }
 
     function applySceneSnapshot(snapshot) {
-      const defaultCuts = { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } };
-      const safeRoom = snapshot.room || { width: 364, height: 364, cuts: defaultCuts };
-      const safeCuts = safeRoom.cuts || defaultCuts;
-      state.room = {
-        width: Number(safeRoom.width) || 364,
-        height: Number(safeRoom.height) || 364,
-        cuts: {
-          tl: { w: Number(safeCuts.tl && safeCuts.tl.w) || 0, h: Number(safeCuts.tl && safeCuts.tl.h) || 0 },
-          tr: { w: Number(safeCuts.tr && safeCuts.tr.w) || 0, h: Number(safeCuts.tr && safeCuts.tr.h) || 0 },
-          br: { w: Number(safeCuts.br && safeCuts.br.w) || 0, h: Number(safeCuts.br && safeCuts.br.h) || 0 },
-          bl: { w: Number(safeCuts.bl && safeCuts.bl.w) || 0, h: Number(safeCuts.bl && safeCuts.bl.h) || 0 }
-        }
-      };
-      state.items = Array.isArray(snapshot.items) ? snapshot.items : [];
-      state.wallItems = Array.isArray(snapshot.wallItems) ? snapshot.wallItems : [];
-      state.selected = snapshot.selected || null;
-      state.drag = null;
-      state.room.cuts = normalizeCuts(state.room.cuts, state.room.width, state.room.height);
-      roomWEl.value = String(state.room.width);
-      roomHEl.value = String(state.room.height);
-      setShapeInputsFromState();
-      normalizeToRoom();
+      if (snapshot && Array.isArray(snapshot.blocks) && snapshot.blocks.length > 0) {
+        state.blocks = deepCopy(snapshot.blocks).map((b, index) => {
+          const fallbackType = index === 0 ? "1f" : `block-${index}`;
+          const type = b.type || fallbackType;
+          const label = b.label || (type === "1f" ? "1階" : type === "2f" ? "2階" : type === "loft" ? "ロフト" : `ブロック${index + 1}`);
+          return {
+            id: b.id || crypto.randomUUID(),
+            type,
+            label,
+            room: b.room || createDefaultRoom(),
+            items: Array.isArray(b.items) ? b.items : [],
+            wallItems: Array.isArray(b.wallItems) ? b.wallItems : []
+          };
+        });
+        const fallbackId = state.blocks[0].id;
+        const requestedId = snapshot.activeBlockId;
+        const activeId = state.blocks.some((b) => b.id === requestedId) ? requestedId : fallbackId;
+        loadBlockState(activeId, false);
+        state.selected = snapshot.selected || null;
+      } else {
+        // Backward-compatible load for old single-floor snapshot format.
+        const defaultCuts = { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } };
+        const safeRoom = (snapshot && snapshot.room) || { width: 364, height: 364, cuts: defaultCuts };
+        const safeCuts = safeRoom.cuts || defaultCuts;
+        const legacyRoom = {
+          width: Number(safeRoom.width) || 364,
+          height: Number(safeRoom.height) || 364,
+          cuts: {
+            tl: { w: Number(safeCuts.tl && safeCuts.tl.w) || 0, h: Number(safeCuts.tl && safeCuts.tl.h) || 0 },
+            tr: { w: Number(safeCuts.tr && safeCuts.tr.w) || 0, h: Number(safeCuts.tr && safeCuts.tr.h) || 0 },
+            br: { w: Number(safeCuts.br && safeCuts.br.w) || 0, h: Number(safeCuts.br && safeCuts.br.h) || 0 },
+            bl: { w: Number(safeCuts.bl && safeCuts.bl.w) || 0, h: Number(safeCuts.bl && safeCuts.bl.h) || 0 }
+          }
+        };
+        state.blocks = [
+          {
+            id: "block-1f",
+            type: "1f",
+            label: "1階",
+            room: legacyRoom,
+            items: Array.isArray(snapshot && snapshot.items) ? snapshot.items : [],
+            wallItems: Array.isArray(snapshot && snapshot.wallItems) ? snapshot.wallItems : []
+          }
+        ];
+        loadBlockState("block-1f", false);
+        state.selected = snapshot && snapshot.selected ? snapshot.selected : null;
+      }
+      if (state.selected && state.selected.kind === "item" && !state.items.some((x) => x.id === state.selected.id)) {
+        state.selected = null;
+      }
+      if (state.selected && state.selected.kind === "wall" && !state.wallItems.some((x) => x.id === state.selected.id)) {
+        state.selected = null;
+      }
     }
 
     function rememberCurrentState() {
@@ -738,7 +926,7 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return false;
         const data = JSON.parse(raw);
-        if (!data || !data.room || !Array.isArray(data.items) || !Array.isArray(data.wallItems)) return false;
+        if (!data) return false;
         applySceneSnapshot(data);
         return true;
       } catch (_) {
@@ -747,26 +935,63 @@
     }
 
     function updateSelectionInfo() {
+      const block = getActiveBlock();
+      const blockLabel = block ? block.label : "1階";
       if (!state.selected) {
-        selectionInfoEl.textContent = "未選択";
+        selectionInfoEl.textContent = `${blockLabel}: 未選択`;
         return;
       }
       if (state.selected.kind === "item") {
         const it = state.items.find((x) => x.id === state.selected.id);
         if (!it) {
-          selectionInfoEl.textContent = "未選択";
+          selectionInfoEl.textContent = `${blockLabel}: 未選択`;
           return;
         }
-        selectionInfoEl.textContent = `選択中: ${it.name} / 位置 ${it.x},${it.y}cm / サイズ ${it.w}x${it.h}cm`;
+        selectionInfoEl.textContent = `${blockLabel} 選択中: ${it.name} / 位置 ${it.x},${it.y}cm / サイズ ${it.w}x${it.h}cm`;
         return;
       }
       const w = state.wallItems.find((x) => x.id === state.selected.id);
       if (!w) {
-        selectionInfoEl.textContent = "未選択";
+        selectionInfoEl.textContent = `${blockLabel}: 未選択`;
         return;
       }
       const wallJa = { top: "上", right: "右", bottom: "下", left: "左" }[w.wall] || w.wall;
-      selectionInfoEl.textContent = `選択中: ${w.name} / ${wallJa}壁 / 開始 ${w.pos}cm / 長さ ${w.len}cm`;
+      selectionInfoEl.textContent = `${blockLabel} 選択中: ${w.name} / ${wallJa}壁 / 開始 ${w.pos}cm / 長さ ${w.len}cm`;
+    }
+
+    function renderBlockList() {
+      blockListEl.innerHTML = "";
+      for (const block of state.blocks) {
+        const row = document.createElement("div");
+        row.className = `block-item${block.id === state.activeBlockId ? " active" : ""}`;
+
+        const name = document.createElement("span");
+        name.className = "block-name";
+        name.textContent = block.label;
+        row.appendChild(name);
+
+        const actions = document.createElement("div");
+        actions.className = "block-actions-inline";
+
+        const open = document.createElement("button");
+        open.textContent = block.id === state.activeBlockId ? "編集中" : "切替";
+        open.disabled = block.id === state.activeBlockId;
+        open.onclick = () => switchToBlock(block.id);
+        actions.appendChild(open);
+
+        if (block.type !== "1f") {
+          const del = document.createElement("button");
+          del.className = "delete";
+          del.textContent = "削除";
+          del.onclick = () => removeStructureBlock(block.id);
+          actions.appendChild(del);
+        }
+
+        row.appendChild(actions);
+        blockListEl.appendChild(row);
+      }
+      const active = getActiveBlock();
+      activeBlockLabelEl.textContent = `編集中: ${active ? active.label : "1階"}`;
     }
 
     function downloadTextFile(filename, text, mime) {
@@ -802,7 +1027,7 @@
 
     function isBackLayerItem(item) {
       if (!item) return false;
-      return item.name === "カーペット" || item.name === "ロフト" || item.name === "2階スペース";
+      return item.name === "カーペット";
     }
 
     function isFurniturePlacementValid(x, y, w, h) {
@@ -1268,16 +1493,19 @@
     }
 
     function update() {
+      saveActiveBlockState();
       const metrics = getMetrics();
       drawRoom(metrics);
       drawWallItems(metrics);
       drawItems(metrics);
+      renderBlockList();
       renderList();
       updateSelectionInfo();
       updateHistoryButtons();
+      const active = getActiveBlock();
       const conflicts = detectConflicts();
       if (conflicts.length > 0) setStatus(conflicts[0], true);
-      else setStatus("部屋形状の変更・家具移動・壁要素配置ができます。");
+      else setStatus(`${active ? active.label : "1階"}ブロックを編集中です。`);
     }
 
     function getPointer(e) {
@@ -1565,7 +1793,9 @@
         try {
           const raw = JSON.parse(String(reader.result));
           const scene = raw && raw.scene ? raw.scene : raw;
-          if (!scene || !scene.room || !Array.isArray(scene.items) || !Array.isArray(scene.wallItems)) {
+          const isNewFormat = scene && Array.isArray(scene.blocks);
+          const isOldFormat = scene && scene.room && Array.isArray(scene.items) && Array.isArray(scene.wallItems);
+          if (!isNewFormat && !isOldFormat) {
             throw new Error("invalid-format");
           }
           rememberCurrentState();
@@ -1597,6 +1827,8 @@
     wallTypeEl.addEventListener("change", applyWallPreset);
     addEl.addEventListener("click", addItem);
     addWallEl.addEventListener("click", addWallItem);
+    addSecondFloorEl.addEventListener("click", () => addStructureBlock("2f"));
+    addLoftBlockEl.addEventListener("click", () => addStructureBlock("loft"));
     applyRoomEl.addEventListener("click", applyRoomSize);
     applyShapeEl.addEventListener("click", applyRoomShape);
     undoEl.addEventListener("click", undo);
@@ -1635,9 +1867,7 @@
       }
     });
 
-    roomWEl.value = String(state.room.width);
-    roomHEl.value = String(state.room.height);
-    setShapeInputsFromState();
+    loadBlockState("block-1f");
     applyPreset();
     applyWallPreset();
     if (loadFromLocalStorage()) {
