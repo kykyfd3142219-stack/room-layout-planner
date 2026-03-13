@@ -26,32 +26,44 @@
         radial-gradient(circle at 85% 90%, #f0ebe0 0%, transparent 30%),
         var(--bg);
       min-height: 100vh;
-      padding-top: 110px;
+      padding-top: 136px;
+      transition: padding-top 0.18s ease;
+    }
+    body.top-collapsed {
+      padding-top: 92px;
     }
     .top-shell {
       position: fixed;
       left: 0;
       right: 0;
       top: 0;
-      z-index: 40;
+      z-index: 70;
       backdrop-filter: blur(5px);
       background: rgba(255, 252, 245, 0.94);
-      border-bottom: 1px solid #e5e7eb;
-      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+      border-bottom: 1px solid #d7dee8;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
     }
     .top-inner {
       max-width: 1380px;
       margin: 0 auto;
-      padding: 8px 18px;
+      padding: 6px 18px;
       display: grid;
-      gap: 8px;
+      gap: 6px;
+    }
+    .steps-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
     .steps-bar {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
-      font-size: 0.82rem;
+      flex: 1;
+      min-width: 0;
+      font-size: 0.79rem;
       color: #0f172a;
     }
     .steps-title {
@@ -64,16 +76,29 @@
       background: #ecfeff;
       color: #115e59;
       border-radius: 999px;
-      padding: 4px 10px;
+      padding: 3px 9px;
+      font-weight: 700;
+    }
+    .top-toggle {
+      white-space: nowrap;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #d1d5db;
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: 0.74rem;
       font-weight: 700;
     }
     .file-bar {
       border: 1px solid #dbeafe;
       border-radius: 10px;
       background: #ffffff;
-      padding: 8px;
+      padding: 6px 8px;
       display: grid;
-      gap: 6px;
+      gap: 4px;
+    }
+    .top-shell.collapsed .file-bar {
+      display: none;
     }
     .file-title {
       font-size: 0.76rem;
@@ -84,7 +109,7 @@
     .file-actions {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
     .file-actions label {
@@ -99,18 +124,30 @@
     }
     .app {
       max-width: 1380px;
-      margin: 0 auto;
-      padding: 18px;
+      margin: 12px auto 0;
+      padding: 22px;
       display: grid;
       grid-template-columns: 340px 1fr;
-      gap: 18px;
+      gap: 24px;
     }
     .panel {
-      background: var(--panel);
-      border: 1px solid #e5e7eb;
+      position: relative;
+      z-index: 20;
+      background: linear-gradient(180deg, #ffffff 0%, #fdfefe 100%);
+      border: 1px solid #dbe4ee;
       border-radius: 12px;
       padding: 14px;
-      box-shadow: 0 10px 24px rgba(31, 41, 55, 0.06);
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1);
+    }
+    .panel::before {
+      content: "";
+      position: absolute;
+      left: 1px;
+      right: 1px;
+      top: 1px;
+      height: 4px;
+      border-radius: 11px 11px 0 0;
+      background: linear-gradient(90deg, #0f766e 0%, #14b8a6 100%);
     }
     .panel-inner {
       max-height: calc(100vh - 48px);
@@ -481,11 +518,23 @@
       justify-self: end;
     }
     .stage {
-      background: var(--panel);
-      border: 1px solid #e5e7eb;
+      position: relative;
+      z-index: 10;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+      border: 1px solid #d8e0eb;
       border-radius: 12px;
-      box-shadow: 0 10px 24px rgba(31, 41, 55, 0.06);
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
       padding: 12px;
+    }
+    .stage::before {
+      content: "";
+      position: absolute;
+      left: 1px;
+      right: 1px;
+      top: 1px;
+      height: 4px;
+      border-radius: 11px 11px 0 0;
+      background: linear-gradient(90deg, #0ea5e9 0%, #2563eb 100%);
     }
     .stage-head {
       display: flex;
@@ -527,7 +576,12 @@
       color: #475569;
     }
     @media (max-width: 900px) {
-      body { padding-top: 188px; }
+      body { padding-top: 210px; }
+      body.top-collapsed { padding-top: 128px; }
+      .top-inner { padding: 6px 12px; }
+      .steps-row { align-items: flex-start; }
+      .top-toggle { padding: 4px 10px; }
+      .app { margin-top: 8px; padding: 14px; gap: 14px; }
       .app { grid-template-columns: 1fr; }
       .panel-inner { max-height: none; }
       .quick-actions { grid-template-columns: 1fr; }
@@ -545,13 +599,18 @@
   <a class="skip-link" href="#room">キャンバスへスキップ</a>
   <header class="top-shell">
     <div class="top-inner">
-      <div class="steps-bar" aria-label="使い始めの3ステップ">
-        <span class="steps-title">使い始めの3ステップ</span>
-        <span class="step-chip">① 部屋サイズ入力</span>
-        <span class="step-chip">② 家具追加</span>
-        <span class="step-chip">③ 保存 / PNG出力</span>
+      <div class="steps-row">
+        <div class="steps-bar" aria-label="使い始めの3ステップ">
+          <span class="steps-title">使い始めの3ステップ</span>
+          <span class="step-chip">① 部屋サイズ入力</span>
+          <span class="step-chip">② 家具追加</span>
+          <span class="step-chip">③ 保存 / PNG出力</span>
+        </div>
+        <button id="toggleTopBar" class="top-toggle" type="button" aria-expanded="true" aria-controls="fileBarPanel">
+          ファイル操作を折りたたむ
+        </button>
       </div>
-      <div class="file-bar" role="toolbar" aria-label="ファイル操作">
+      <div id="fileBarPanel" class="file-bar" role="toolbar" aria-label="ファイル操作">
         <div class="file-title">ファイル操作</div>
         <div class="file-actions">
           <button id="undo" class="cta-quiet">元に戻す</button>
@@ -829,6 +888,7 @@
       dragStartSnapshot: null
     };
     const STORAGE_KEY = "room-layout-sim-v2";
+    const TOP_BAR_COLLAPSE_KEY = "room-layout-topbar-collapsed-v1";
 
     const roomWEl = document.getElementById("roomW");
     const roomHEl = document.getElementById("roomH");
@@ -878,6 +938,9 @@
     const exportPngEl = document.getElementById("exportPng");
     const tutorialEl = document.getElementById("tutorial");
     const closeTutorialEl = document.getElementById("closeTutorial");
+    const topShellEl = document.querySelector(".top-shell");
+    const toggleTopBarEl = document.getElementById("toggleTopBar");
+    const fileBarPanelEl = document.getElementById("fileBarPanel");
 
     for (let i = 0; i < presets.length; i++) {
       const p = presets[i];
@@ -2930,6 +2993,31 @@
       tutorialEl.classList.add("open");
     }
 
+    function setTopBarCollapsed(collapsed, save = true) {
+      if (!topShellEl || !toggleTopBarEl || !fileBarPanelEl) return;
+      topShellEl.classList.toggle("collapsed", collapsed);
+      document.body.classList.toggle("top-collapsed", collapsed);
+      fileBarPanelEl.setAttribute("aria-hidden", collapsed ? "true" : "false");
+      toggleTopBarEl.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      toggleTopBarEl.textContent = collapsed ? "ファイル操作を表示" : "ファイル操作を折りたたむ";
+      if (!save) return;
+      try {
+        localStorage.setItem(TOP_BAR_COLLAPSE_KEY, collapsed ? "1" : "0");
+      } catch (_) {
+        // Ignore storage errors.
+      }
+    }
+
+    function restoreTopBarState() {
+      let collapsed = false;
+      try {
+        collapsed = localStorage.getItem(TOP_BAR_COLLAPSE_KEY) === "1";
+      } catch (_) {
+        // Ignore storage errors.
+      }
+      setTopBarCollapsed(collapsed, false);
+    }
+
     presetEl.addEventListener("change", applyPreset);
     wallTypeEl.addEventListener("change", () => {
       applyWallPreset();
@@ -2959,6 +3047,10 @@
     });
     exportPngEl.addEventListener("click", exportCanvasPng);
     closeTutorialEl.addEventListener("click", closeTutorial);
+    toggleTopBarEl.addEventListener("click", () => {
+      const collapsed = !topShellEl.classList.contains("collapsed");
+      setTopBarCollapsed(collapsed);
+    });
     tutorialEl.addEventListener("click", (e) => {
       if (e.target === tutorialEl) closeTutorial();
     });
@@ -2992,6 +3084,7 @@
 
     renderRoomTemplateButtons();
     renderFurnitureCatalog();
+    restoreTopBarState();
     gridSizeEl.value = String(state.gridCm);
     snapToggleEl.checked = state.snapEnabled;
     loadBlockState("block-1f");
