@@ -429,6 +429,9 @@
       { name: "ソファ 2人掛け", w: 150, h: 85, color: "#0ea5e9" },
       { name: "デスク", w: 120, h: 60, color: "#22c55e" },
       { name: "デスクチェア", w: 60, h: 60, color: "#15803d" },
+      { name: "階段", w: 90, h: 180, color: "#8b5e3c" },
+      { name: "ロフト", w: 220, h: 160, color: "#4b5563" },
+      { name: "2階スペース", w: 240, h: 180, color: "#64748b" },
       { name: "カーペット", w: 180, h: 140, color: "#c2410c" },
       { name: "本棚", w: 90, h: 30, color: "#6366f1" },
       { name: "ローテーブル", w: 100, h: 50, color: "#eab308" },
@@ -797,8 +800,9 @@
       return a.x1 < b.x2 && a.x2 > b.x1 && a.y1 < b.y2 && a.y2 > b.y1;
     }
 
-    function isCarpet(item) {
-      return item && item.name === "カーペット";
+    function isBackLayerItem(item) {
+      if (!item) return false;
+      return item.name === "カーペット" || item.name === "ロフト" || item.name === "2階スペース";
     }
 
     function isFurniturePlacementValid(x, y, w, h) {
@@ -1178,9 +1182,9 @@
     }
 
     function drawItems(metrics) {
-      const carpets = state.items.filter((it) => isCarpet(it));
-      const others = state.items.filter((it) => !isCarpet(it));
-      for (const it of carpets) drawItemBody(it, metrics);
+      const backLayerItems = state.items.filter((it) => isBackLayerItem(it));
+      const others = state.items.filter((it) => !isBackLayerItem(it));
+      for (const it of backLayerItems) drawItemBody(it, metrics);
       for (const it of others) drawItemBody(it, metrics);
       if (state.selected && state.selected.kind === "item") {
         const selectedItem = state.items.find((it) => it.id === state.selected.id);
@@ -1234,13 +1238,13 @@
         if (!isFurniturePlacementValid(a.x, a.y, a.w, a.h)) out.push(`${a.name} が部屋形状の外にはみ出しています`);
         for (let j = i + 1; j < state.items.length; j++) {
           const b = state.items[j];
-          if (isCarpet(a) || isCarpet(b)) continue;
+          if (isBackLayerItem(a) || isBackLayerItem(b)) continue;
           if (overlap(ra, rectOfItem(b))) out.push(`${a.name} と ${b.name} が重なっています`);
         }
       }
 
       for (const furniture of state.items) {
-        if (isCarpet(furniture)) continue;
+        if (isBackLayerItem(furniture)) continue;
         const fr = rectOfItem(furniture);
         for (const wall of state.wallItems) {
           const wr = wallSolidRect(wall);
@@ -1293,8 +1297,8 @@
 
     function hitFurniture(pxX, pxY, metrics) {
       const drawOrder = [
-        ...state.items.filter((it) => isCarpet(it)),
-        ...state.items.filter((it) => !isCarpet(it))
+        ...state.items.filter((it) => isBackLayerItem(it)),
+        ...state.items.filter((it) => !isBackLayerItem(it))
       ];
       for (let i = drawOrder.length - 1; i >= 0; i--) {
         const it = drawOrder[i];
