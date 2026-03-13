@@ -342,6 +342,16 @@
       display: grid;
       gap: 8px;
     }
+    .inline-note {
+      margin: 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #dbeafe;
+      background: #f0f9ff;
+      color: #1e3a8a;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
     .list {
       margin-top: 12px;
       max-height: 240px;
@@ -759,6 +769,7 @@
                 壁に沿った幅 (cm)
                 <input id="wallLen" type="number" min="10" max="300" step="5" />
               </label>
+              <p class="inline-note">注意: 壁要素は「壁要素を追加」を押して作成した後、キャンバス上でドラッグして移動できます。</p>
               <button id="addWall" class="cta-primary">壁要素を追加</button>
             </div>
           </details>
