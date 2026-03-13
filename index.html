@@ -95,7 +95,7 @@
     }
     .block-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 8px;
     }
     .block-list {
@@ -353,6 +353,7 @@
           <div class="block-actions">
             <button id="addSecondFloor" class="ghost">2階ブロック追加</button>
             <button id="addLoftBlock" class="ghost">ロフトブロック追加</button>
+            <button id="addBalconyBlock" class="ghost">ベランダブロック追加</button>
           </div>
           <div class="block-list" id="blockList"></div>
 
@@ -568,6 +569,7 @@
     const addWallEl = document.getElementById("addWall");
     const addSecondFloorEl = document.getElementById("addSecondFloor");
     const addLoftBlockEl = document.getElementById("addLoftBlock");
+    const addBalconyBlockEl = document.getElementById("addBalconyBlock");
     const blockListEl = document.getElementById("blockList");
     const activeBlockLabelEl = document.getElementById("activeBlockLabel");
     const undoEl = document.getElementById("undo");
@@ -637,8 +639,33 @@
       }
     }
 
+    function blockLabelByType(type, index = 0) {
+      if (type === "1f") return "1階";
+      if (type === "2f") return "2階";
+      if (type === "loft") return "ロフト";
+      if (type === "balcony") return "ベランダ";
+      return `ブロック${index + 1}`;
+    }
+
+    function defaultRoomForStructure(type) {
+      const firstFloor = state.blocks.find((b) => b.type === "1f");
+      const source = firstFloor ? firstFloor.room : state.room;
+      const room = deepCopy(source);
+      if (type !== "balcony") return room;
+      return {
+        width: snap(clamp(room.width, 150, 1200)),
+        height: snap(clamp(Math.round(room.height * 0.4), 150, 400)),
+        cuts: {
+          tl: { w: 0, h: 0 },
+          tr: { w: 0, h: 0 },
+          br: { w: 0, h: 0 },
+          bl: { w: 0, h: 0 }
+        }
+      };
+    }
+
     function addStructureBlock(type) {
-      const label = type === "2f" ? "2階" : "ロフト";
+      const label = blockLabelByType(type);
       const existing = state.blocks.find((b) => b.type === type);
       if (existing) {
         switchToBlock(existing.id);
@@ -646,13 +673,11 @@
         return;
       }
       rememberCurrentState();
-      const firstFloor = state.blocks.find((b) => b.type === "1f");
-      const source = firstFloor ? firstFloor.room : state.room;
       const block = {
         id: crypto.randomUUID(),
         type,
         label,
-        room: deepCopy(source),
+        room: defaultRoomForStructure(type),
         items: [],
         wallItems: []
       };
@@ -842,7 +867,7 @@
         state.blocks = deepCopy(snapshot.blocks).map((b, index) => {
           const fallbackType = index === 0 ? "1f" : `block-${index}`;
           const type = b.type || fallbackType;
-          const label = b.label || (type === "1f" ? "1階" : type === "2f" ? "2階" : type === "loft" ? "ロフト" : `ブロック${index + 1}`);
+          const label = b.label || blockLabelByType(type, index);
           return {
             id: b.id || crypto.randomUUID(),
             type,
@@ -1829,6 +1854,7 @@
     addWallEl.addEventListener("click", addWallItem);
     addSecondFloorEl.addEventListener("click", () => addStructureBlock("2f"));
     addLoftBlockEl.addEventListener("click", () => addStructureBlock("loft"));
+    addBalconyBlockEl.addEventListener("click", () => addStructureBlock("balcony"));
     applyRoomEl.addEventListener("click", applyRoomSize);
     applyShapeEl.addEventListener("click", applyRoomShape);
     undoEl.addEventListener("click", undo);
