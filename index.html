@@ -333,7 +333,7 @@
           <p>誰でも使いやすい操作に改善した版です</p>
         </div>
         <p class="small">
-          部屋サイズ・形状・家具・壁要素をひとつの画面で編集できます。<br />
+          1階 / 2階 / ロフト / ベランダを同時表示し、そのまま編集できます。<br />
           レイアウト保存/読込、PNG書き出し、Undo/Redoにも対応しています。
         </p>
 
@@ -351,9 +351,9 @@
         <section class="controls">
           <div class="section-title">フロアブロック</div>
           <div class="block-actions">
-            <button id="addSecondFloor" class="ghost">2階ブロック追加</button>
-            <button id="addLoftBlock" class="ghost">ロフトブロック追加</button>
-            <button id="addBalconyBlock" class="ghost">ベランダブロック追加</button>
+            <button id="addSecondFloor" class="ghost">2階を選択</button>
+            <button id="addLoftBlock" class="ghost">ロフトを選択</button>
+            <button id="addBalconyBlock" class="ghost">ベランダを選択</button>
           </div>
           <div class="block-list" id="blockList"></div>
 
@@ -473,7 +473,7 @@
     <section class="stage">
       <div class="stage-head">
         <span id="activeBlockLabel">編集中: 1階</span>
-        <span>グリッド: 10cm</span>
+        <span>4面同時表示 / グリッド: 10cm</span>
       </div>
       <canvas id="room" width="820" height="820" tabindex="0" aria-label="部屋レイアウトキャンバス"></canvas>
     </section>
@@ -529,6 +529,39 @@
           type: "1f",
           label: "1階",
           room: createDefaultRoom(),
+          items: [],
+          wallItems: []
+        },
+        {
+          id: "block-2f",
+          type: "2f",
+          label: "2階",
+          room: createDefaultRoom(),
+          items: [],
+          wallItems: []
+        },
+        {
+          id: "block-loft",
+          type: "loft",
+          label: "ロフト",
+          room: createDefaultRoom(),
+          items: [],
+          wallItems: []
+        },
+        {
+          id: "block-balcony",
+          type: "balcony",
+          label: "ベランダ",
+          room: {
+            width: 364,
+            height: 150,
+            cuts: {
+              tl: { w: 0, h: 0 },
+              tr: { w: 0, h: 0 },
+              br: { w: 0, h: 0 },
+              bl: { w: 0, h: 0 }
+            }
+          },
           items: [],
           wallItems: []
         }
@@ -632,7 +665,7 @@
 
     function switchToBlock(blockId) {
       if (blockId === state.activeBlockId) return;
-      rememberCurrentState();
+      saveActiveBlockState();
       if (loadBlockState(blockId)) {
         update();
         saveToLocalStorage();
@@ -647,9 +680,9 @@
       return `ブロック${index + 1}`;
     }
 
-    function defaultRoomForStructure(type) {
+    function defaultRoomForStructure(type, sourceRoom = null) {
       const firstFloor = state.blocks.find((b) => b.type === "1f");
-      const source = firstFloor ? firstFloor.room : state.room;
+      const source = sourceRoom || (firstFloor ? firstFloor.room : state.room);
       const room = deepCopy(source);
       if (type !== "balcony") return room;
       return {
@@ -662,6 +695,52 @@
           bl: { w: 0, h: 0 }
         }
       };
+    }
+
+    function isCoreBlockType(type) {
+      return type === "1f" || type === "2f" || type === "loft" || type === "balcony";
+    }
+
+    function ensureCoreBlocks() {
+      const required = ["1f", "2f", "loft", "balcony"];
+      const byType = new Map();
+      const extras = [];
+
+      for (const block of state.blocks) {
+        if (isCoreBlockType(block.type) && !byType.has(block.type)) byType.set(block.type, block);
+        else extras.push(block);
+      }
+
+      const firstFloor = byType.get("1f");
+      const sourceRoom = firstFloor && firstFloor.room ? firstFloor.room : createDefaultRoom();
+      const nextBlocks = [];
+      for (let i = 0; i < required.length; i++) {
+        const type = required[i];
+        const label = blockLabelByType(type, i);
+        let block = byType.get(type);
+        if (!block) {
+          block = {
+            id: `block-${type}`,
+            type,
+            label,
+            room: defaultRoomForStructure(type, sourceRoom),
+            items: [],
+            wallItems: []
+          };
+        } else {
+          block.type = type;
+          block.label = label;
+          if (!block.room) block.room = defaultRoomForStructure(type, sourceRoom);
+          if (!Array.isArray(block.items)) block.items = [];
+          if (!Array.isArray(block.wallItems)) block.wallItems = [];
+        }
+        nextBlocks.push(block);
+      }
+
+      state.blocks = nextBlocks.concat(extras.filter((x) => !isCoreBlockType(x.type)));
+      if (!state.blocks.some((b) => b.id === state.activeBlockId)) {
+        loadBlockState(state.blocks[0].id, false);
+      }
     }
 
     function addStructureBlock(type) {
@@ -690,7 +769,7 @@
 
     function removeStructureBlock(blockId) {
       const block = state.blocks.find((b) => b.id === blockId);
-      if (!block || block.type === "1f") return;
+      if (!block || isCoreBlockType(block.type)) return;
       rememberCurrentState();
       state.blocks = state.blocks.filter((b) => b.id !== blockId);
       if (state.activeBlockId === blockId) {
@@ -699,6 +778,7 @@
       } else {
         loadBlockState(state.activeBlockId);
       }
+      ensureCoreBlocks();
       update();
       saveToLocalStorage();
       setStatus(`${block.label}ブロックを削除しました。`);
@@ -823,21 +903,96 @@
       return clampAndSnap(pos, min, max);
     }
 
-    function getMetrics() {
-      const pad = 48;
+    function getMetrics(viewport) {
+      const base = viewport || { x: 0, y: 0, w: canvas.width, h: canvas.height };
+      const pad = 28;
       const scale = Math.min(
-        (canvas.width - pad * 2) / state.room.width,
-        (canvas.height - pad * 2) / state.room.height
+        (base.w - pad * 2) / state.room.width,
+        (base.h - pad * 2) / state.room.height
       );
       const widthPx = state.room.width * scale;
       const heightPx = state.room.height * scale;
       return {
         scale,
-        left: (canvas.width - widthPx) / 2,
-        top: (canvas.height - heightPx) / 2,
+        left: base.x + (base.w - widthPx) / 2,
+        top: base.y + (base.h - heightPx) / 2,
         widthPx,
         heightPx
       };
+    }
+
+    function getBlockByType(type) {
+      return state.blocks.find((b) => b.type === type) || null;
+    }
+
+    function getViewports() {
+      const gap = 12;
+      const cols = 2;
+      const rows = 2;
+      const w = (canvas.width - gap * (cols + 1)) / cols;
+      const h = (canvas.height - gap * (rows + 1)) / rows;
+      const layout = [
+        { type: "1f", col: 0, row: 0 },
+        { type: "2f", col: 1, row: 0 },
+        { type: "loft", col: 0, row: 1 },
+        { type: "balcony", col: 1, row: 1 }
+      ];
+      return layout.map((x) => {
+        const block = getBlockByType(x.type);
+        return {
+          block,
+          x: gap + x.col * (w + gap),
+          y: gap + x.row * (h + gap),
+          w,
+          h
+        };
+      }).filter((x) => !!x.block);
+    }
+
+    function viewportByBlockId(blockId) {
+      return getViewports().find((v) => v.block.id === blockId) || null;
+    }
+
+    function viewportAt(x, y) {
+      const viewports = getViewports();
+      for (const v of viewports) {
+        if (x >= v.x && x <= v.x + v.w && y >= v.y && y <= v.y + v.h) return v;
+      }
+      return null;
+    }
+
+    function drawViewportFrame(viewport, active) {
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = active ? "#0f766e" : "#d1d5db";
+      ctx.lineWidth = active ? 2.5 : 1.2;
+      ctx.beginPath();
+      ctx.roundRect(viewport.x, viewport.y, viewport.w, viewport.h, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = active ? "#0f766e" : "#475569";
+      ctx.font = "bold 13px sans-serif";
+      const label = viewport.block ? viewport.block.label : "";
+      ctx.fillText(label, viewport.x + 12, viewport.y + 20);
+    }
+
+    function withTransientBlock(block, selected, fn) {
+      const prevRoom = state.room;
+      const prevItems = state.items;
+      const prevWallItems = state.wallItems;
+      const prevSelected = state.selected;
+      state.room = block.room;
+      state.items = block.items;
+      state.wallItems = block.wallItems;
+      state.selected = selected;
+      try {
+        fn();
+      } finally {
+        state.room = prevRoom;
+        state.items = prevItems;
+        state.wallItems = prevWallItems;
+        state.selected = prevSelected;
+      }
     }
 
     function cmToPx(v, metrics) {
@@ -877,6 +1032,7 @@
             wallItems: Array.isArray(b.wallItems) ? b.wallItems : []
           };
         });
+        ensureCoreBlocks();
         const fallbackId = state.blocks[0].id;
         const requestedId = snapshot.activeBlockId;
         const activeId = state.blocks.some((b) => b.id === requestedId) ? requestedId : fallbackId;
@@ -907,6 +1063,7 @@
             wallItems: Array.isArray(snapshot && snapshot.wallItems) ? snapshot.wallItems : []
           }
         ];
+        ensureCoreBlocks();
         loadBlockState("block-1f", false);
         state.selected = snapshot && snapshot.selected ? snapshot.selected : null;
       }
@@ -1004,7 +1161,7 @@
         open.onclick = () => switchToBlock(block.id);
         actions.appendChild(open);
 
-        if (block.type !== "1f") {
+        if (!isCoreBlockType(block.type)) {
           const del = document.createElement("button");
           del.className = "delete";
           del.textContent = "削除";
@@ -1280,7 +1437,6 @@
     }
 
     function drawRoom(metrics) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--room");
       buildRoomPath(metrics);
       ctx.fill("evenodd");
@@ -1376,11 +1532,14 @@
       const h = cmToPx(r.y2 - r.y1, metrics);
       ctx.fillStyle = it.color;
       ctx.fillRect(x, y, w, h);
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.fillRect(x + 4, y + 4, Math.max(42, Math.min(w - 8, 86)), 18);
-      ctx.fillStyle = "#111827";
-      ctx.font = "11px sans-serif";
-      ctx.fillText(it.name, x + 6, y + 17);
+      if (w >= 42 && h >= 20) {
+        const tagW = Math.max(32, Math.min(w - 8, 86));
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.fillRect(x + 4, y + 4, tagW, 18);
+        ctx.fillStyle = "#111827";
+        ctx.font = "11px sans-serif";
+        ctx.fillText(it.name, x + 6, y + 17);
+      }
       if (selected) {
         ctx.strokeStyle = "#111827";
         ctx.lineWidth = 2;
@@ -1412,11 +1571,14 @@
       const h = cmToPx(item.h, metrics);
       ctx.fillStyle = item.color;
       ctx.fillRect(x, y, w, h);
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.fillRect(x + 5, y + 5, Math.max(56, Math.min(w - 10, 110)), 20);
-      ctx.fillStyle = "#111827";
-      ctx.font = "12px sans-serif";
-      ctx.fillText(item.name, x + 8, y + 19);
+      if (w >= 44 && h >= 24) {
+        const tagW = Math.max(30, Math.min(w - 8, 110));
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.fillRect(x + 4, y + 4, tagW, 17);
+        ctx.fillStyle = "#111827";
+        ctx.font = "11px sans-serif";
+        ctx.fillText(item.name, x + 7, y + 17);
+      }
     }
 
     function drawItemSelection(item, metrics) {
@@ -1519,10 +1681,22 @@
 
     function update() {
       saveActiveBlockState();
-      const metrics = getMetrics();
-      drawRoom(metrics);
-      drawWallItems(metrics);
-      drawItems(metrics);
+      ensureCoreBlocks();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const viewports = getViewports();
+      for (const viewport of viewports) {
+        drawViewportFrame(viewport, viewport.block.id === state.activeBlockId);
+        withTransientBlock(
+          viewport.block,
+          viewport.block.id === state.activeBlockId ? state.selected : null,
+          () => {
+            const metrics = getMetrics(viewport);
+            drawRoom(metrics);
+            drawWallItems(metrics);
+            drawItems(metrics);
+          }
+        );
+      }
       renderBlockList();
       renderList();
       updateSelectionInfo();
@@ -1622,13 +1796,26 @@
 
     canvas.addEventListener("pointerdown", (e) => {
       canvas.focus();
-      const metrics = getMetrics();
       const p = getPointer(e);
+      const viewport = viewportAt(p.x, p.y);
+      if (!viewport || !viewport.block) {
+        state.selected = null;
+        update();
+        return;
+      }
+
+      if (state.activeBlockId !== viewport.block.id) {
+        saveActiveBlockState();
+        loadBlockState(viewport.block.id);
+      }
+
+      const metrics = getMetrics(viewport);
       const furniture = hitFurniture(p.x, p.y, metrics);
       if (furniture) {
         state.selected = { kind: "item", id: furniture.id };
         state.drag = {
           kind: "item",
+          blockId: viewport.block.id,
           id: furniture.id,
           offsetX: p.x - (metrics.left + cmToPx(furniture.x, metrics)),
           offsetY: p.y - (metrics.top + cmToPx(furniture.y, metrics)),
@@ -1643,7 +1830,7 @@
       const wall = hitWallItem(p.x, p.y, metrics);
       if (wall) {
         state.selected = { kind: "wall", id: wall.id };
-        state.drag = { kind: "wall", id: wall.id, moved: false };
+        state.drag = { kind: "wall", blockId: viewport.block.id, id: wall.id, moved: false };
         history.dragStartSnapshot = sceneSnapshot();
         canvas.setPointerCapture(e.pointerId);
         update();
@@ -1656,7 +1843,12 @@
 
     canvas.addEventListener("pointermove", (e) => {
       if (!state.drag) return;
-      const metrics = getMetrics();
+      if (state.activeBlockId !== state.drag.blockId) {
+        loadBlockState(state.drag.blockId, false);
+      }
+      const viewport = viewportByBlockId(state.drag.blockId);
+      if (!viewport) return;
+      const metrics = getMetrics(viewport);
       const p = getPointer(e);
       if (state.drag.kind === "item") {
         const it = state.items.find((x) => x.id === state.drag.id);
