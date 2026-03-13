@@ -26,6 +26,76 @@
         radial-gradient(circle at 85% 90%, #f0ebe0 0%, transparent 30%),
         var(--bg);
       min-height: 100vh;
+      padding-top: 110px;
+    }
+    .top-shell {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(5px);
+      background: rgba(255, 252, 245, 0.94);
+      border-bottom: 1px solid #e5e7eb;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+    }
+    .top-inner {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 8px 18px;
+      display: grid;
+      gap: 8px;
+    }
+    .steps-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+      color: #0f172a;
+    }
+    .steps-title {
+      font-weight: 800;
+      color: #0f766e;
+      margin-right: 4px;
+    }
+    .step-chip {
+      border: 1px solid #99f6e4;
+      background: #ecfeff;
+      color: #115e59;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-weight: 700;
+    }
+    .file-bar {
+      border: 1px solid #dbeafe;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+    }
+    .file-title {
+      font-size: 0.76rem;
+      color: #475569;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+    .file-actions {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      align-items: center;
+    }
+    .file-actions label {
+      display: grid;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: #475569;
+      font-weight: 700;
+    }
+    .file-actions input[type="file"] {
+      font-size: 0.74rem;
     }
     .app {
       max-width: 1380px;
@@ -132,6 +202,10 @@
     .block-actions-inline {
       display: flex;
       gap: 6px;
+      align-items: center;
+    }
+    .block-actions-inline input[type="checkbox"] {
+      accent-color: #0f766e;
     }
     .block-actions-inline button {
       font-size: 0.75rem;
@@ -269,6 +343,138 @@
       line-height: 1.45;
       min-height: 3.1em;
     }
+    .selection-title {
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: #0f766e;
+      margin-bottom: 6px;
+    }
+    .selection-editor {
+      margin-top: 8px;
+      display: grid;
+      gap: 8px;
+    }
+    .selection-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .selection-actions {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .selection-actions button {
+      font-size: 0.78rem;
+      padding: 7px 8px;
+    }
+    .template-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .template-grid button {
+      background: #0f766e;
+      font-size: 0.8rem;
+    }
+    .grid-tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      align-items: end;
+    }
+    .grid-tools .snap-toggle {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.82rem;
+      background: #f8fafc;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .furniture-catalog {
+      display: grid;
+      gap: 10px;
+    }
+    .furniture-group {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px;
+      background: #f8fafc;
+      display: grid;
+      gap: 6px;
+    }
+    .furniture-group h4 {
+      margin: 0;
+      font-size: 0.78rem;
+      color: #334155;
+      letter-spacing: 0.01em;
+    }
+    .furniture-cards {
+      display: grid;
+      gap: 6px;
+    }
+    .furniture-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px;
+      background: #fff;
+      border: 1px solid #dbe3eb;
+      border-radius: 8px;
+      font-size: 0.78rem;
+    }
+    .furniture-card button {
+      padding: 4px 8px;
+      font-size: 0.74rem;
+      background: #0f766e;
+    }
+    .cta-primary {
+      background: #0f766e;
+      font-weight: 800;
+    }
+    .cta-quiet {
+      background: #334155;
+    }
+    .tutorial {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+      padding: 16px;
+    }
+    .tutorial.open {
+      display: flex;
+    }
+    .tutorial-card {
+      width: min(520px, 100%);
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #dbeafe;
+      box-shadow: 0 18px 34px rgba(15, 23, 42, 0.2);
+      padding: 16px;
+      display: grid;
+      gap: 8px;
+    }
+    .tutorial-card h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+    .tutorial-card p {
+      margin: 0;
+      color: #475569;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .tutorial-card button {
+      justify-self: end;
+    }
     .stage {
       background: var(--panel);
       border: 1px solid #e5e7eb;
@@ -316,15 +522,45 @@
       color: #475569;
     }
     @media (max-width: 900px) {
+      body { padding-top: 188px; }
       .app { grid-template-columns: 1fr; }
       .panel-inner { max-height: none; }
       .quick-actions { grid-template-columns: 1fr; }
       .block-actions { grid-template-columns: 1fr; }
+      .file-actions { grid-template-columns: 1fr 1fr; }
+      .file-actions label { grid-column: 1 / -1; }
+      .selection-grid { grid-template-columns: 1fr; }
+      .selection-actions { grid-template-columns: 1fr; }
+      .template-grid { grid-template-columns: 1fr; }
+      .grid-tools { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <a class="skip-link" href="#room">キャンバスへスキップ</a>
+  <header class="top-shell">
+    <div class="top-inner">
+      <div class="steps-bar" aria-label="最初の3ステップ">
+        <span class="steps-title">最初の3ステップ</span>
+        <span class="step-chip">① 部屋サイズ入力</span>
+        <span class="step-chip">② 家具追加</span>
+        <span class="step-chip">③ 保存 / PNG出力</span>
+      </div>
+      <div class="file-bar" role="toolbar" aria-label="ファイル操作">
+        <div class="file-title">ファイル操作</div>
+        <div class="file-actions">
+          <button id="undo" class="cta-quiet">元に戻す</button>
+          <button id="redo" class="cta-quiet">やり直し</button>
+          <button id="downloadJson" class="ghost">保存(JSON)</button>
+          <label for="uploadJson">
+            読込(JSON)
+            <input id="uploadJson" type="file" accept="application/json" />
+          </label>
+          <button id="exportPng" class="cta-primary">PNG出力</button>
+        </div>
+      </div>
+    </div>
+  </header>
   <main class="app">
     <aside class="panel">
       <div class="panel-inner">
@@ -336,17 +572,6 @@
           デフォルトは1階のみ表示。2階 / ロフト / ベランダは追加して同時編集できます。<br />
           レイアウト保存/読込、PNG書き出し、Undo/Redoにも対応しています。
         </p>
-
-        <div class="quick-actions" role="toolbar" aria-label="クイック操作">
-          <button id="undo" class="secondary">元に戻す</button>
-          <button id="redo" class="secondary">やり直し</button>
-          <button id="downloadJson" class="ghost">レイアウト保存</button>
-          <label class="full" for="uploadJson">
-            <span class="section-title">レイアウト読込 (JSON)</span>
-            <input id="uploadJson" type="file" accept="application/json" />
-          </label>
-          <button id="exportPng" class="ghost full">PNG画像として書き出し</button>
-        </div>
 
         <section class="controls">
           <div class="section-title">フロアブロック</div>
@@ -360,6 +585,8 @@
           <details open>
             <summary>部屋設定</summary>
             <div class="details-body">
+              <div class="section-title">部屋テンプレート</div>
+              <div id="roomTemplateButtons" class="template-grid"></div>
               <label>
                 幅 (cm)
                 <input id="roomW" type="number" min="150" max="1200" step="10" value="364" />
@@ -368,7 +595,21 @@
                 奥行き (cm)
                 <input id="roomH" type="number" min="150" max="1200" step="10" value="364" />
               </label>
-              <button id="applyRoom">部屋サイズを反映</button>
+              <button id="applyRoom" class="cta-primary">部屋サイズを反映</button>
+              <div class="grid-tools">
+                <label class="snap-toggle" for="snapToggle">
+                  <input id="snapToggle" type="checkbox" checked />
+                  スナップON
+                </label>
+                <label>
+                  グリッド間隔
+                  <select id="gridSize">
+                    <option value="5">5cm</option>
+                    <option value="10" selected>10cm</option>
+                    <option value="25">25cm</option>
+                  </select>
+                </label>
+              </div>
             </div>
           </details>
 
@@ -407,13 +648,15 @@
                 左下カット 奥行き (cm)
                 <input id="cutBLH" type="number" min="0" max="1200" step="10" value="0" />
               </label>
-              <button id="applyShape" class="secondary">形状を反映</button>
+              <button id="applyShape" class="cta-quiet">形状を反映</button>
             </div>
           </details>
 
           <details open>
             <summary>家具</summary>
             <div class="details-body">
+              <div class="section-title">カテゴリ別テンプレート</div>
+              <div id="furnitureCatalog" class="furniture-catalog"></div>
               <label>
                 家具テンプレート
                 <select id="preset"></select>
@@ -426,8 +669,9 @@
                 奥行き (cm)
                 <input id="h" type="number" min="30" max="300" step="5" />
               </label>
-              <button id="add">家具を追加</button>
+              <button id="add" class="cta-primary">家具を追加</button>
               <button id="rotate" class="secondary">選択家具を90°回転</button>
+              <button id="duplicateItem" class="ghost">選択家具を複製</button>
             </div>
           </details>
 
@@ -451,14 +695,23 @@
                 壁に沿った幅 (cm)
                 <input id="wallLen" type="number" min="10" max="300" step="5" />
               </label>
-              <button id="addWall">壁要素を追加</button>
+              <button id="addWall" class="cta-primary">壁要素を追加</button>
             </div>
           </details>
 
           <button id="clear" class="warn">全てクリア</button>
         </section>
 
-        <div class="selection" id="selectionInfo">未選択</div>
+        <section class="selection" aria-label="選択オブジェクト編集">
+          <div class="selection-title" id="selectionTitle">選択オブジェクト編集</div>
+          <div id="selectionInfo">未選択</div>
+          <div id="selectionEditor" class="selection-editor"></div>
+          <div class="selection-actions">
+            <button id="applySelection" class="cta-primary">選択内容を反映</button>
+            <button id="duplicateSelected" class="ghost">家具を複製</button>
+            <button id="deleteSelectedBtn" class="warn">選択を削除</button>
+          </div>
+        </section>
         <div class="list" id="list"></div>
         <div class="status" id="status" role="status" aria-live="polite"></div>
         <div class="help">
@@ -473,11 +726,20 @@
     <section class="stage">
       <div class="stage-head">
         <span id="activeBlockLabel">編集中: 1階</span>
-        <span>追加した面を同時表示 / グリッド: 10cm</span>
+        <span id="gridInfo">追加した面を同時表示 / グリッド: 10cm</span>
       </div>
       <canvas id="room" width="820" height="820" tabindex="0" aria-label="部屋レイアウトキャンバス"></canvas>
     </section>
   </main>
+  <div id="tutorial" class="tutorial" role="dialog" aria-modal="true" aria-label="初回チュートリアル">
+    <div class="tutorial-card">
+      <h2>初回ガイド</h2>
+      <p>1. 上の「最初の3ステップ」に沿って、まず部屋サイズを決めます。</p>
+      <p>2. 家具をカテゴリから追加して、位置をドラッグで調整します。</p>
+      <p>3. 最後に上部の「保存(JSON)」または「PNG出力」で保存します。</p>
+      <button id="closeTutorial" class="cta-primary">使い始める</button>
+    </div>
+  </div>
 
   <script>
     function createDefaultRoom() {
@@ -494,16 +756,16 @@
     }
 
     const presets = [
-      { name: "シングルベッド", w: 100, h: 200, color: "#f97316" },
-      { name: "ダブルベッド", w: 140, h: 200, color: "#ea580c" },
-      { name: "ソファ 2人掛け", w: 150, h: 85, color: "#0ea5e9" },
-      { name: "デスク", w: 120, h: 60, color: "#22c55e" },
-      { name: "デスクチェア", w: 60, h: 60, color: "#15803d" },
-      { name: "階段", w: 90, h: 180, color: "#8b5e3c" },
-      { name: "カーペット", w: 180, h: 140, color: "#c2410c" },
-      { name: "本棚", w: 90, h: 30, color: "#6366f1" },
-      { name: "ローテーブル", w: 100, h: 50, color: "#eab308" },
-      { name: "テレビ台", w: 120, h: 45, color: "#14b8a6" }
+      { category: "ベッド", name: "シングルベッド", w: 100, h: 200, color: "#f97316" },
+      { category: "ベッド", name: "ダブルベッド", w: 140, h: 200, color: "#ea580c" },
+      { category: "リビング", name: "ソファ 2人掛け", w: 150, h: 85, color: "#0ea5e9" },
+      { category: "ワーク", name: "デスク", w: 120, h: 60, color: "#22c55e" },
+      { category: "ワーク", name: "デスクチェア", w: 60, h: 60, color: "#15803d" },
+      { category: "構造", name: "階段", w: 90, h: 180, color: "#8b5e3c" },
+      { category: "ラグ", name: "カーペット", w: 180, h: 140, color: "#c2410c" },
+      { category: "収納", name: "本棚", w: 90, h: 30, color: "#6366f1" },
+      { category: "リビング", name: "ローテーブル", w: 100, h: 50, color: "#eab308" },
+      { category: "収納", name: "テレビ台", w: 120, h: 45, color: "#14b8a6" }
     ];
     const wallPresets = [
       { key: "window", name: "窓", len: 120, depth: 0, color: "#0891b2", render: "line" },
@@ -512,8 +774,25 @@
       { key: "storage", name: "物置", len: 100, depth: 60, color: "#a16207", render: "solid" },
       { key: "closet", name: "クローゼット", len: 180, depth: 0, color: "#7c3aed", render: "line" }
     ];
+    const roomTemplates = [
+      { key: "6jo", label: "6畳", width: 273, height: 364, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } },
+      { key: "8joSquare", label: "8畳正方形", width: 364, height: 364, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } },
+      { key: "singleStandard", label: "一人暮らし標準", width: 320, height: 430, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } }
+    ];
+    const WALL_ANGLE = { top: 0, right: 90, bottom: 180, left: 270 };
+    const SELECTION_EDITOR_IDS = {
+      name: "selName",
+      x: "selX",
+      y: "selY",
+      w: "selW",
+      h: "selH",
+      angle: "selAngle",
+      wall: "selWall",
+      pos: "selPos",
+      len: "selLen",
+      depth: "selDepth"
+    };
 
-    const gridCm = 10;
     const canvas = document.getElementById("room");
     const ctx = canvas.getContext("2d");
 
@@ -523,6 +802,8 @@
       wallItems: [],
       selected: null, // { kind: "item" | "wall", id: string }
       drag: null,
+      gridCm: 10,
+      snapEnabled: true,
       blocks: [
         {
           id: "block-1f",
@@ -530,7 +811,8 @@
           label: "1階",
           room: createDefaultRoom(),
           items: [],
-          wallItems: []
+          wallItems: [],
+          visible: true
         }
       ],
       activeBlockId: "block-1f"
@@ -544,6 +826,10 @@
 
     const roomWEl = document.getElementById("roomW");
     const roomHEl = document.getElementById("roomH");
+    const roomTemplateButtonsEl = document.getElementById("roomTemplateButtons");
+    const gridSizeEl = document.getElementById("gridSize");
+    const snapToggleEl = document.getElementById("snapToggle");
+    const gridInfoEl = document.getElementById("gridInfo");
     const applyRoomEl = document.getElementById("applyRoom");
     const cutTLWEl = document.getElementById("cutTLW");
     const cutTLHEl = document.getElementById("cutTLH");
@@ -559,10 +845,17 @@
     const hEl = document.getElementById("h");
     const addEl = document.getElementById("add");
     const rotateEl = document.getElementById("rotate");
+    const duplicateItemEl = document.getElementById("duplicateItem");
     const clearEl = document.getElementById("clear");
     const listEl = document.getElementById("list");
     const statusEl = document.getElementById("status");
+    const selectionTitleEl = document.getElementById("selectionTitle");
     const selectionInfoEl = document.getElementById("selectionInfo");
+    const selectionEditorEl = document.getElementById("selectionEditor");
+    const applySelectionEl = document.getElementById("applySelection");
+    const duplicateSelectedEl = document.getElementById("duplicateSelected");
+    const deleteSelectedBtnEl = document.getElementById("deleteSelectedBtn");
+    const furnitureCatalogEl = document.getElementById("furnitureCatalog");
     const wallTypeEl = document.getElementById("wallType");
     const wallSideEl = document.getElementById("wallSide");
     const wallLenEl = document.getElementById("wallLen");
@@ -577,12 +870,14 @@
     const downloadJsonEl = document.getElementById("downloadJson");
     const uploadJsonEl = document.getElementById("uploadJson");
     const exportPngEl = document.getElementById("exportPng");
+    const tutorialEl = document.getElementById("tutorial");
+    const closeTutorialEl = document.getElementById("closeTutorial");
 
     for (let i = 0; i < presets.length; i++) {
       const p = presets[i];
       const opt = document.createElement("option");
       opt.value = String(i);
-      opt.textContent = `${p.name} (${p.w}x${p.h}cm)`;
+      opt.textContent = `${p.category} / ${p.name} (${p.w}x${p.h}cm)`;
       presetEl.appendChild(opt);
     }
     for (let i = 0; i < wallPresets.length; i++) {
@@ -599,6 +894,15 @@
 
     function deepCopy(value) {
       return JSON.parse(JSON.stringify(value));
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#39;");
     }
 
     function getActiveBlock() {
@@ -686,6 +990,10 @@
         if (!block.room) block.room = createDefaultRoom();
         if (!Array.isArray(block.items)) block.items = [];
         if (!Array.isArray(block.wallItems)) block.wallItems = [];
+        for (const item of block.items) {
+          if (!Number.isFinite(item.angle)) item.angle = 0;
+        }
+        block.visible = block.visible !== false;
         extras.push(block);
       }
 
@@ -697,7 +1005,8 @@
           label: "1階",
           room: createDefaultRoom(),
           items: [],
-          wallItems: []
+          wallItems: [],
+          visible: true
         };
         typedByType.set("1f", firstFloor);
       }
@@ -713,10 +1022,23 @@
         if (!block.room) block.room = defaultRoomForStructure(type, sourceRoom);
         if (!Array.isArray(block.items)) block.items = [];
         if (!Array.isArray(block.wallItems)) block.wallItems = [];
+        for (const item of block.items) {
+          if (!Number.isFinite(item.angle)) item.angle = 0;
+        }
+        block.visible = block.visible !== false;
         typed.push(block);
       }
 
       state.blocks = typed.concat(extras);
+      if (state.blocks.every((b) => b.visible === false)) {
+        const first = state.blocks.find((b) => b.type === "1f") || state.blocks[0];
+        if (first) first.visible = true;
+      }
+      const activeBlock = state.blocks.find((b) => b.id === state.activeBlockId);
+      if (activeBlock && activeBlock.visible === false) {
+        const visibleFallback = state.blocks.find((b) => b.visible !== false);
+        if (visibleFallback) loadBlockState(visibleFallback.id, false);
+      }
       if (!state.blocks.some((b) => b.id === state.activeBlockId)) {
         const fallback = state.blocks.find((b) => b.type === "1f") || state.blocks[0];
         if (fallback) loadBlockState(fallback.id, false);
@@ -727,6 +1049,7 @@
       const label = blockLabelByType(type);
       const existing = state.blocks.find((b) => b.type === type);
       if (existing) {
+        if (existing.visible === false) existing.visible = true;
         switchToBlock(existing.id);
         setStatus(`${label}ブロックに切り替えました。`);
         return;
@@ -738,7 +1061,8 @@
         label,
         room: defaultRoomForStructure(type),
         items: [],
-        wallItems: []
+        wallItems: [],
+        visible: true
       };
       state.blocks.push(block);
       loadBlockState(block.id);
@@ -764,8 +1088,16 @@
       setStatus(`${block.label}ブロックを削除しました。`);
     }
 
+    function currentGridCm() {
+      const raw = Number(state.gridCm);
+      if (!Number.isFinite(raw)) return 10;
+      return clamp(raw, 1, 50);
+    }
+
     function snap(v) {
-      return Math.round(v / gridCm) * gridCm;
+      if (!state.snapEnabled) return Math.round(v);
+      const step = currentGridCm();
+      return Math.round(v / step) * step;
     }
 
     function clampAndSnap(v, min, max) {
@@ -784,8 +1116,9 @@
 
     function normalizeCuts(cuts, width, height) {
       const out = copyCuts(cuts);
-      const maxW = Math.max(0, width - gridCm);
-      const maxH = Math.max(0, height - gridCm);
+      const step = currentGridCm();
+      const maxW = Math.max(0, width - step);
+      const maxH = Math.max(0, height - step);
 
       out.tl.w = clampAndSnap(out.tl.w, 0, maxW);
       out.tr.w = clampAndSnap(out.tr.w, 0, maxW);
@@ -810,8 +1143,8 @@
         return [first, second];
       }
 
-      const maxHorizontal = Math.max(0, width - gridCm);
-      const maxVertical = Math.max(0, height - gridCm);
+      const maxHorizontal = Math.max(0, width - step);
+      const maxVertical = Math.max(0, height - step);
       [out.tl.w, out.tr.w] = fitPair(out.tl.w, out.tr.w, maxHorizontal);
       [out.bl.w, out.br.w] = fitPair(out.bl.w, out.br.w, maxHorizontal);
       [out.tl.h, out.bl.h] = fitPair(out.tl.h, out.bl.h, maxVertical);
@@ -904,7 +1237,7 @@
     function getViewports() {
       const gap = 12;
       const typeOrder = { "1f": 0, "2f": 1, "loft": 2, "balcony": 3 };
-      const blocks = [...state.blocks].sort((a, b) => {
+      const blocks = state.blocks.filter((b) => b.visible !== false).sort((a, b) => {
         const ao = Object.prototype.hasOwnProperty.call(typeOrder, a.type) ? typeOrder[a.type] : 100;
         const bo = Object.prototype.hasOwnProperty.call(typeOrder, b.type) ? typeOrder[b.type] : 100;
         return ao - bo;
@@ -992,12 +1325,16 @@
       return deepCopy({
         blocks: state.blocks,
         activeBlockId: state.activeBlockId,
-        selected: state.selected
+        selected: state.selected,
+        gridCm: state.gridCm,
+        snapEnabled: state.snapEnabled
       });
     }
 
     function applySceneSnapshot(snapshot) {
       if (snapshot && Array.isArray(snapshot.blocks) && snapshot.blocks.length > 0) {
+        state.gridCm = [5, 10, 25].includes(Number(snapshot.gridCm)) ? Number(snapshot.gridCm) : 10;
+        state.snapEnabled = snapshot.snapEnabled !== false;
         state.blocks = deepCopy(snapshot.blocks).map((b, index) => {
           const fallbackType = index === 0 ? "1f" : `block-${index}`;
           const type = b.type || fallbackType;
@@ -1008,7 +1345,8 @@
             label,
             room: b.room || createDefaultRoom(),
             items: Array.isArray(b.items) ? b.items : [],
-            wallItems: Array.isArray(b.wallItems) ? b.wallItems : []
+            wallItems: Array.isArray(b.wallItems) ? b.wallItems : [],
+            visible: b.visible !== false
           };
         });
         normalizeStructureBlocks();
@@ -1039,13 +1377,18 @@
             label: "1階",
             room: legacyRoom,
             items: Array.isArray(snapshot && snapshot.items) ? snapshot.items : [],
-            wallItems: Array.isArray(snapshot && snapshot.wallItems) ? snapshot.wallItems : []
+            wallItems: Array.isArray(snapshot && snapshot.wallItems) ? snapshot.wallItems : [],
+            visible: true
           }
         ];
+        state.gridCm = 10;
+        state.snapEnabled = true;
         normalizeStructureBlocks();
         loadBlockState("block-1f", false);
         state.selected = snapshot && snapshot.selected ? snapshot.selected : null;
       }
+      gridSizeEl.value = String(state.gridCm);
+      snapToggleEl.checked = state.snapEnabled;
       if (state.selected && state.selected.kind === "item" && !state.items.some((x) => x.id === state.selected.id)) {
         state.selected = null;
       }
@@ -1095,29 +1438,98 @@
       }
     }
 
+    function selectedItem() {
+      if (!state.selected || state.selected.kind !== "item") return null;
+      return state.items.find((x) => x.id === state.selected.id) || null;
+    }
+
+    function selectedWall() {
+      if (!state.selected || state.selected.kind !== "wall") return null;
+      return state.wallItems.find((x) => x.id === state.selected.id) || null;
+    }
+
+    function renderSelectionEditor() {
+      selectionEditorEl.innerHTML = "";
+      applySelectionEl.disabled = !state.selected;
+      deleteSelectedBtnEl.disabled = !state.selected;
+      duplicateSelectedEl.disabled = !(state.selected && state.selected.kind === "item");
+
+      const it = selectedItem();
+      if (it) {
+        const angle = Number.isFinite(it.angle) ? ((it.angle % 360) + 360) % 360 : 0;
+        selectionEditorEl.innerHTML = `
+          <label>名前<input id="${SELECTION_EDITOR_IDS.name}" type="text" value="${escapeHtml(it.name)}" /></label>
+          <div class="selection-grid">
+            <label>X (cm)<input id="${SELECTION_EDITOR_IDS.x}" type="number" value="${it.x}" /></label>
+            <label>Y (cm)<input id="${SELECTION_EDITOR_IDS.y}" type="number" value="${it.y}" /></label>
+            <label>幅 (cm)<input id="${SELECTION_EDITOR_IDS.w}" type="number" value="${it.w}" min="30" /></label>
+            <label>奥行き (cm)<input id="${SELECTION_EDITOR_IDS.h}" type="number" value="${it.h}" min="30" /></label>
+            <label>回転角
+              <select id="${SELECTION_EDITOR_IDS.angle}">
+                <option value="0"${angle === 0 ? " selected" : ""}>0°</option>
+                <option value="90"${angle === 90 ? " selected" : ""}>90°</option>
+                <option value="180"${angle === 180 ? " selected" : ""}>180°</option>
+                <option value="270"${angle === 270 ? " selected" : ""}>270°</option>
+              </select>
+            </label>
+          </div>
+        `;
+        return;
+      }
+
+      const wall = selectedWall();
+      if (wall) {
+        const angle = WALL_ANGLE[wall.wall] || 0;
+        const depthField = wall.render === "solid"
+          ? `<label>奥行き (cm)<input id="${SELECTION_EDITOR_IDS.depth}" type="number" value="${wall.depth}" min="10" /></label>`
+          : "";
+        selectionEditorEl.innerHTML = `
+          <label>名前<input id="${SELECTION_EDITOR_IDS.name}" type="text" value="${escapeHtml(wall.name)}" /></label>
+          <div class="selection-grid">
+            <label>壁
+              <select id="${SELECTION_EDITOR_IDS.wall}">
+                <option value="top"${wall.wall === "top" ? " selected" : ""}>上</option>
+                <option value="right"${wall.wall === "right" ? " selected" : ""}>右</option>
+                <option value="bottom"${wall.wall === "bottom" ? " selected" : ""}>下</option>
+                <option value="left"${wall.wall === "left" ? " selected" : ""}>左</option>
+              </select>
+            </label>
+            <label>開始位置 (cm)<input id="${SELECTION_EDITOR_IDS.pos}" type="number" value="${wall.pos}" /></label>
+            <label>長さ (cm)<input id="${SELECTION_EDITOR_IDS.len}" type="number" value="${wall.len}" min="10" /></label>
+            ${depthField}
+            <label>回転角 (表示)<input type="number" value="${angle}" disabled /></label>
+          </div>
+        `;
+        return;
+      }
+    }
+
     function updateSelectionInfo() {
       const block = getActiveBlock();
       const blockLabel = block ? block.label : "1階";
+      selectionTitleEl.textContent = `${blockLabel} の選択オブジェクト編集`;
       if (!state.selected) {
+        selectionInfoEl.textContent = `${blockLabel}: 未選択（キャンバスで家具/壁要素をクリック）`;
+        renderSelectionEditor();
+        return;
+      }
+      const it = selectedItem();
+      if (it) {
+        const angle = Number.isFinite(it.angle) ? ((it.angle % 360) + 360) % 360 : 0;
+        selectionInfoEl.textContent = `${blockLabel} 選択中: ${it.name} / 位置 ${it.x},${it.y}cm / サイズ ${it.w}x${it.h}cm / 角度 ${angle}°`;
+        renderSelectionEditor();
+        return;
+      }
+      const wall = selectedWall();
+      if (!wall) {
         selectionInfoEl.textContent = `${blockLabel}: 未選択`;
+        renderSelectionEditor();
         return;
       }
-      if (state.selected.kind === "item") {
-        const it = state.items.find((x) => x.id === state.selected.id);
-        if (!it) {
-          selectionInfoEl.textContent = `${blockLabel}: 未選択`;
-          return;
-        }
-        selectionInfoEl.textContent = `${blockLabel} 選択中: ${it.name} / 位置 ${it.x},${it.y}cm / サイズ ${it.w}x${it.h}cm`;
-        return;
-      }
-      const w = state.wallItems.find((x) => x.id === state.selected.id);
-      if (!w) {
-        selectionInfoEl.textContent = `${blockLabel}: 未選択`;
-        return;
-      }
-      const wallJa = { top: "上", right: "右", bottom: "下", left: "左" }[w.wall] || w.wall;
-      selectionInfoEl.textContent = `${blockLabel} 選択中: ${w.name} / ${wallJa}壁 / 開始 ${w.pos}cm / 長さ ${w.len}cm`;
+      const wallJa = { top: "上", right: "右", bottom: "下", left: "左" }[wall.wall] || wall.wall;
+      const angle = WALL_ANGLE[wall.wall] || 0;
+      selectionInfoEl.textContent = `${blockLabel} 選択中: ${wall.name} / ${wallJa}壁 / 開始 ${wall.pos}cm / 長さ ${wall.len}cm / 角度 ${angle}°`;
+      renderSelectionEditor();
     }
 
     function renderBlockList() {
@@ -1134,10 +1546,44 @@
         const actions = document.createElement("div");
         actions.className = "block-actions-inline";
 
+        const toggleWrap = document.createElement("label");
+        toggleWrap.style.display = "flex";
+        toggleWrap.style.alignItems = "center";
+        toggleWrap.style.gap = "4px";
+        toggleWrap.style.fontSize = "0.72rem";
+        toggleWrap.style.color = "#475569";
+        const toggle = document.createElement("input");
+        toggle.type = "checkbox";
+        toggle.checked = block.visible !== false;
+        toggle.onchange = () => {
+          const visibleCount = state.blocks.filter((b) => b.visible !== false).length;
+          if (!toggle.checked && visibleCount <= 1) {
+            toggle.checked = true;
+            setStatus("最低1フロアは表示状態にしてください。", true);
+            return;
+          }
+          rememberCurrentState();
+          block.visible = toggle.checked;
+          if (!toggle.checked && state.activeBlockId === block.id) {
+            const next = state.blocks.find((b) => b.id !== block.id && b.visible !== false) || state.blocks.find((b) => b.type === "1f");
+            if (next) loadBlockState(next.id);
+          }
+          update();
+          saveToLocalStorage();
+        };
+        const toggleText = document.createElement("span");
+        toggleText.textContent = "表示";
+        toggleWrap.appendChild(toggle);
+        toggleWrap.appendChild(toggleText);
+        actions.appendChild(toggleWrap);
+
         const open = document.createElement("button");
         open.textContent = block.id === state.activeBlockId ? "編集中" : "切替";
         open.disabled = block.id === state.activeBlockId;
-        open.onclick = () => switchToBlock(block.id);
+        open.onclick = () => {
+          if (block.visible === false) block.visible = true;
+          switchToBlock(block.id);
+        };
         actions.appendChild(open);
 
         if (block.type !== "1f") {
@@ -1169,13 +1615,105 @@
 
     function applyPreset() {
       const p = presets[Number(presetEl.value)];
+      if (!p) return;
       wEl.value = String(p.w);
       hEl.value = String(p.h);
     }
 
     function applyWallPreset() {
       const p = wallPresets[Number(wallTypeEl.value)];
+      if (!p) return;
       wallLenEl.value = String(p.len);
+    }
+
+    function applyGridSettings() {
+      const nextGrid = Number(gridSizeEl.value);
+      state.gridCm = [5, 10, 25].includes(nextGrid) ? nextGrid : 10;
+      state.snapEnabled = !!snapToggleEl.checked;
+      normalizeToRoom();
+      update();
+      saveToLocalStorage();
+    }
+
+    function renderRoomTemplateButtons() {
+      roomTemplateButtonsEl.innerHTML = "";
+      for (const template of roomTemplates) {
+        const btn = document.createElement("button");
+        btn.className = "ghost";
+        btn.textContent = `${template.label} (${template.width}x${template.height})`;
+        btn.onclick = () => applyRoomTemplate(template);
+        roomTemplateButtonsEl.appendChild(btn);
+      }
+    }
+
+    function applyRoomTemplate(template) {
+      rememberCurrentState();
+      state.room.width = snap(clamp(template.width, 150, 1200));
+      state.room.height = snap(clamp(template.height, 150, 1200));
+      const nextCuts = template.cuts ? deepCopy(template.cuts) : { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } };
+      state.room.cuts = normalizeCuts(nextCuts, state.room.width, state.room.height);
+      roomWEl.value = String(state.room.width);
+      roomHEl.value = String(state.room.height);
+      setShapeInputsFromState();
+      normalizeToRoom();
+      update();
+      saveToLocalStorage();
+      setStatus(`${template.label} テンプレートを適用しました。`);
+    }
+
+    function addPresetItem(preset) {
+      if (!preset) return;
+      if (preset.w > state.room.width || preset.h > state.room.height) {
+        setStatus("部屋サイズを超える家具は追加できません。", true);
+        return;
+      }
+      const item = createItem(preset.name, snap(preset.w), snap(preset.h), preset.color);
+      if (!item) {
+        setStatus("この部屋形状では配置できる場所がありません。", true);
+        return;
+      }
+      rememberCurrentState();
+      state.items.push(item);
+      state.selected = { kind: "item", id: item.id };
+      update();
+      saveToLocalStorage();
+    }
+
+    function renderFurnitureCatalog() {
+      furnitureCatalogEl.innerHTML = "";
+      const groupOrder = ["ベッド", "ワーク", "リビング", "収納", "ラグ", "構造"];
+      for (const category of groupOrder) {
+        const items = presets.filter((p) => p.category === category);
+        if (items.length === 0) continue;
+        const wrap = document.createElement("section");
+        wrap.className = "furniture-group";
+        const title = document.createElement("h4");
+        title.textContent = category;
+        wrap.appendChild(title);
+        const cards = document.createElement("div");
+        cards.className = "furniture-cards";
+        for (const preset of items) {
+          const row = document.createElement("div");
+          row.className = "furniture-card";
+          const text = document.createElement("span");
+          text.textContent = `${preset.name} (${preset.w}x${preset.h})`;
+          const addBtn = document.createElement("button");
+          addBtn.textContent = "追加";
+          addBtn.onclick = () => {
+            const idx = presets.findIndex((x) => x.name === preset.name && x.w === preset.w && x.h === preset.h);
+            if (idx >= 0) {
+              presetEl.value = String(idx);
+              applyPreset();
+            }
+            addPresetItem(preset);
+          };
+          row.appendChild(text);
+          row.appendChild(addBtn);
+          cards.appendChild(row);
+        }
+        wrap.appendChild(cards);
+        furnitureCatalogEl.appendChild(wrap);
+      }
     }
 
     function rectOfItem(item) {
@@ -1205,10 +1743,11 @@
 
     function findNearestValidPosition(w, h, preferX, preferY) {
       if (w > state.room.width || h > state.room.height) return null;
+      const step = state.snapEnabled ? currentGridCm() : 5;
       let best = null;
       let bestDistance = Infinity;
-      for (let y = 0; y <= state.room.height - h; y += gridCm) {
-        for (let x = 0; x <= state.room.width - w; x += gridCm) {
+      for (let y = 0; y <= state.room.height - h; y += step) {
+        for (let x = 0; x <= state.room.width - w; x += step) {
           if (!isFurniturePlacementValid(x, y, w, h)) continue;
           const dx = x - preferX;
           const dy = y - preferY;
@@ -1265,13 +1804,14 @@
       const preferredY = (state.room.height - h) / 2;
       const pos = findNearestValidPosition(w, h, preferredX, preferredY);
       if (!pos) return null;
-      return { id: crypto.randomUUID(), name, w, h, x: pos.x, y: pos.y, color };
+      return { id: crypto.randomUUID(), name, w, h, x: pos.x, y: pos.y, color, angle: 0 };
     }
 
     function createWallItem(type, wall, len) {
+      const step = currentGridCm();
       const span = wallSpan(wall);
-      if (span < gridCm) return null;
-      const safeLen = clampAndSnap(len, gridCm, span);
+      if (span < step) return null;
+      const safeLen = clampAndSnap(len, step, span);
       const range = getMainWallRange(wall);
       const pos = clampAndSnap(range.start + (span - safeLen) / 2, range.start, range.end - safeLen);
       return {
@@ -1288,10 +1828,11 @@
     }
 
     function normalizeToRoom() {
+      const step = currentGridCm();
       state.wallItems = state.wallItems.filter((it) => {
         const span = wallSpan(it.wall);
-        if (span < gridCm) return false;
-        it.len = clampAndSnap(it.len, gridCm, span);
+        if (span < step) return false;
+        it.len = clampAndSnap(it.len, step, span);
         it.pos = clampWallPos(it.pos, it.len, it.wall);
         if (it.render === "solid") {
           const depthMax = it.wall === "top" || it.wall === "bottom" ? state.room.height : state.room.width;
@@ -1352,6 +1893,7 @@
 
     function addItem() {
       const p = presets[Number(presetEl.value)];
+      if (!p) return;
       const w = Number(wEl.value);
       const h = Number(hEl.value);
       if (!Number.isFinite(w) || !Number.isFinite(h) || w < 30 || h < 30) {
@@ -1375,6 +1917,7 @@
     }
 
     function addWallItem() {
+      const step = currentGridCm();
       const preset = wallPresets[Number(wallTypeEl.value)];
       const wall = wallSideEl.value;
       const len = Number(wallLenEl.value);
@@ -1383,7 +1926,7 @@
         setStatus("壁要素の幅は10cm以上で入力してください。", true);
         return;
       }
-      if (span < gridCm) {
+      if (span < step) {
         setStatus("この壁には壁要素を配置できません。", true);
         return;
       }
@@ -1401,6 +1944,43 @@
       state.selected = { kind: "wall", id: item.id };
       update();
       saveToLocalStorage();
+    }
+
+    function pendingWallPreview() {
+      const preset = wallPresets[Number(wallTypeEl.value)];
+      if (!preset) return null;
+      const wall = wallSideEl.value;
+      const span = wallSpan(wall);
+      const step = currentGridCm();
+      if (span < step) return null;
+      const requestedLen = Number(wallLenEl.value);
+      if (!Number.isFinite(requestedLen)) return null;
+      const len = clampAndSnap(requestedLen, step, span);
+      const range = getMainWallRange(wall);
+      const pos = clampAndSnap(range.start + (span - len) / 2, range.start, range.end - len);
+      return {
+        id: "preview-wall",
+        type: preset.key,
+        name: preset.name,
+        wall,
+        pos,
+        len,
+        depth: preset.depth,
+        color: preset.color,
+        render: preset.render,
+        preview: true
+      };
+    }
+
+    function drawWallPreview(metrics) {
+      const preview = pendingWallPreview();
+      if (!preview) return;
+      ctx.save();
+      ctx.globalAlpha = 0.46;
+      if (preview.render === "solid") drawWallSolid(preview, metrics, false);
+      else if (preview.render === "plug") drawTvPlug(preview, metrics, false);
+      else drawWallLine(preview, metrics, false);
+      ctx.restore();
     }
 
     function buildRoomPath(metrics) {
@@ -1426,14 +2006,15 @@
 
       ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--grid");
       ctx.lineWidth = 1;
-      for (let x = 0; x <= state.room.width; x += gridCm) {
+      const step = currentGridCm();
+      for (let x = 0; x <= state.room.width; x += step) {
         const pxX = metrics.left + cmToPx(x, metrics);
         ctx.beginPath();
         ctx.moveTo(pxX, metrics.top);
         ctx.lineTo(pxX, metrics.top + metrics.heightPx);
         ctx.stroke();
       }
-      for (let y = 0; y <= state.room.height; y += gridCm) {
+      for (let y = 0; y <= state.room.height; y += step) {
         const pxY = metrics.top + cmToPx(y, metrics);
         ctx.beginPath();
         ctx.moveTo(metrics.left, pxY);
@@ -1461,6 +2042,7 @@
         const midX = (seg.x1 + seg.x2) / 2;
         const midY = (seg.y1 + seg.y2) / 2;
         const tick = 18;
+        const arc = 22;
         ctx.strokeStyle = "rgba(31,41,55,0.55)";
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -1468,6 +2050,34 @@
         if (it.wall === "bottom") { ctx.moveTo(midX, midY); ctx.lineTo(midX, midY - tick); }
         if (it.wall === "left") { ctx.moveTo(midX, midY); ctx.lineTo(midX + tick, midY); }
         if (it.wall === "right") { ctx.moveTo(midX, midY); ctx.lineTo(midX - tick, midY); }
+        ctx.stroke();
+
+        ctx.beginPath();
+        if (it.wall === "top") ctx.arc(midX, midY, arc, Math.PI * 0.1, Math.PI * 0.9, false);
+        if (it.wall === "bottom") ctx.arc(midX, midY, arc, -Math.PI * 0.9, -Math.PI * 0.1, false);
+        if (it.wall === "left") ctx.arc(midX, midY, arc, -Math.PI * 0.4, Math.PI * 0.4, false);
+        if (it.wall === "right") ctx.arc(midX, midY, arc, Math.PI * 0.6, Math.PI * 1.4, false);
+        ctx.stroke();
+      }
+
+      if (it.type === "window") {
+        const midX = (seg.x1 + seg.x2) / 2;
+        const midY = (seg.y1 + seg.y2) / 2;
+        const pane = 10;
+        ctx.strokeStyle = "rgba(255,255,255,0.88)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (it.wall === "top" || it.wall === "bottom") {
+          ctx.moveTo(midX - pane, midY - 6);
+          ctx.lineTo(midX - pane, midY + 6);
+          ctx.moveTo(midX + pane, midY - 6);
+          ctx.lineTo(midX + pane, midY + 6);
+        } else {
+          ctx.moveTo(midX - 6, midY - pane);
+          ctx.lineTo(midX + 6, midY - pane);
+          ctx.moveTo(midX - 6, midY + pane);
+          ctx.lineTo(midX + 6, midY + pane);
+        }
         ctx.stroke();
       }
 
@@ -1583,6 +2193,40 @@
       }
     }
 
+    function drawSelectionShortcut(metrics) {
+      if (!state.selected) return;
+      let anchorX = metrics.left + 14;
+      let anchorY = metrics.top + 16;
+      let text = "Deleteで削除";
+      if (state.selected.kind === "item") {
+        const it = selectedItem();
+        if (!it) return;
+        anchorX = metrics.left + cmToPx(it.x, metrics) + 6;
+        anchorY = metrics.top + cmToPx(it.y, metrics) - 10;
+        text = "Rで回転 / Deleteで削除";
+      } else {
+        const wall = selectedWall();
+        if (!wall) return;
+        const c = wallCenterPx(wall, metrics);
+        anchorX = c.x + 10;
+        anchorY = c.y - 12;
+      }
+
+      ctx.save();
+      ctx.font = "11px sans-serif";
+      const width = Math.max(110, ctx.measureText(text).width + 18);
+      const height = 20;
+      const x = clamp(anchorX, metrics.left + 2, metrics.left + metrics.widthPx - width - 2);
+      const y = clamp(anchorY, metrics.top + 2, metrics.top + metrics.heightPx - height - 2);
+      ctx.fillStyle = "rgba(15,23,42,0.78)";
+      ctx.beginPath();
+      ctx.roundRect(x, y, width, height, 6);
+      ctx.fill();
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillText(text, x + 8, y + 14);
+      ctx.restore();
+    }
+
     function renderList() {
       listEl.innerHTML = "";
       const all = [
@@ -1664,23 +2308,30 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const viewports = getViewports();
       for (const viewport of viewports) {
-        drawViewportFrame(viewport, viewport.block.id === state.activeBlockId);
+        const isActive = viewport.block.id === state.activeBlockId;
+        drawViewportFrame(viewport, isActive);
+        ctx.save();
+        if (!isActive) ctx.globalAlpha = 0.72;
         withTransientBlock(
           viewport.block,
-          viewport.block.id === state.activeBlockId ? state.selected : null,
+          isActive ? state.selected : null,
           () => {
             const metrics = getMetrics(viewport);
             drawRoom(metrics);
+            if (isActive) drawWallPreview(metrics);
             drawWallItems(metrics);
             drawItems(metrics);
+            if (isActive) drawSelectionShortcut(metrics);
           }
         );
+        ctx.restore();
       }
       renderBlockList();
       renderList();
       updateSelectionInfo();
       updateHistoryButtons();
       const active = getActiveBlock();
+      gridInfoEl.textContent = `追加した面を同時表示 / グリッド: ${currentGridCm()}cm / スナップ${state.snapEnabled ? "ON" : "OFF"}`;
       const conflicts = detectConflicts();
       if (conflicts.length > 0) setStatus(conflicts[0], true);
       else setStatus(`${active ? active.label : "1階"}ブロックを編集中です。`);
@@ -1752,8 +2403,9 @@
         { wall: "right", d: state.room.width - cmX }
       ];
       distances.sort((a, b) => a.d - b.d);
+      const step = currentGridCm();
       for (const x of distances) {
-        if (wallSpan(x.wall) >= gridCm) return x.wall;
+        if (wallSpan(x.wall) >= step) return x.wall;
       }
       return item.wall;
     }
@@ -1761,9 +2413,10 @@
     function updateWallDrag(it, cmX, cmY) {
       const wall = nearestWallForItem(cmX, cmY, it);
       it.wall = wall;
+      const step = currentGridCm();
       const span = wallSpan(wall);
-      if (span < gridCm) return;
-      it.len = clampAndSnap(it.len, gridCm, span);
+      if (span < step) return;
+      it.len = clampAndSnap(it.len, step, span);
       if (wall === "top" || wall === "bottom") {
         const desired = cmX - it.len / 2;
         it.pos = clampWallPos(desired, it.len, wall);
@@ -1890,12 +2543,14 @@
       rememberCurrentState();
       it.w = nextW;
       it.h = nextH;
+      it.angle = (((Number(it.angle) || 0) + 90) % 360 + 360) % 360;
       update();
       saveToLocalStorage();
     });
 
     clearEl.addEventListener("click", () => {
       if (state.items.length === 0 && state.wallItems.length === 0) return;
+      if (!window.confirm("現在のフロアの家具・壁要素をすべて削除します。よろしいですか？")) return;
       rememberCurrentState();
       state.items = [];
       state.wallItems = [];
@@ -1969,6 +2624,121 @@
       return true;
     }
 
+    function duplicateSelectedFurniture() {
+      const it = selectedItem();
+      if (!it) {
+        setStatus("複製する家具を選択してください。", true);
+        return false;
+      }
+      const step = currentGridCm();
+      const pos = findNearestValidPosition(it.w, it.h, it.x + step, it.y + step);
+      if (!pos) {
+        setStatus("複製を配置できるスペースがありません。", true);
+        return false;
+      }
+      rememberCurrentState();
+      const copied = {
+        id: crypto.randomUUID(),
+        name: `${it.name}`,
+        w: it.w,
+        h: it.h,
+        x: pos.x,
+        y: pos.y,
+        color: it.color,
+        angle: Number.isFinite(it.angle) ? it.angle : 0
+      };
+      state.items.push(copied);
+      state.selected = { kind: "item", id: copied.id };
+      update();
+      saveToLocalStorage();
+      return true;
+    }
+
+    function applySelectionEdits() {
+      if (!state.selected) return;
+      if (state.selected.kind === "item") {
+        const it = selectedItem();
+        if (!it) return;
+        const nameEl = document.getElementById(SELECTION_EDITOR_IDS.name);
+        const xEl = document.getElementById(SELECTION_EDITOR_IDS.x);
+        const yEl = document.getElementById(SELECTION_EDITOR_IDS.y);
+        const wEl2 = document.getElementById(SELECTION_EDITOR_IDS.w);
+        const hEl2 = document.getElementById(SELECTION_EDITOR_IDS.h);
+        const angleEl = document.getElementById(SELECTION_EDITOR_IDS.angle);
+        if (!nameEl || !xEl || !yEl || !wEl2 || !hEl2 || !angleEl) return;
+
+        const next = {
+          name: String(nameEl.value || it.name).trim() || it.name,
+          x: Number(xEl.value),
+          y: Number(yEl.value),
+          w: Number(wEl2.value),
+          h: Number(hEl2.value),
+          angle: Number(angleEl.value)
+        };
+        if (!Number.isFinite(next.x) || !Number.isFinite(next.y) || !Number.isFinite(next.w) || !Number.isFinite(next.h)) {
+          setStatus("家具の数値入力が不正です。", true);
+          return;
+        }
+        next.w = clampAndSnap(next.w, 30, state.room.width);
+        next.h = clampAndSnap(next.h, 30, state.room.height);
+        const maxX = Math.max(0, state.room.width - next.w);
+        const maxY = Math.max(0, state.room.height - next.h);
+        next.x = clampAndSnap(next.x, 0, maxX);
+        next.y = clampAndSnap(next.y, 0, maxY);
+        next.angle = [0, 90, 180, 270].includes(next.angle) ? next.angle : (it.angle || 0);
+        if (!isFurniturePlacementValid(next.x, next.y, next.w, next.h)) {
+          setStatus("編集後の家具が部屋形状に収まりません。", true);
+          return;
+        }
+        rememberCurrentState();
+        it.name = next.name;
+        it.x = next.x;
+        it.y = next.y;
+        it.w = next.w;
+        it.h = next.h;
+        it.angle = next.angle;
+        update();
+        saveToLocalStorage();
+        return;
+      }
+
+      const wall = selectedWall();
+      if (!wall) return;
+      const nameEl = document.getElementById(SELECTION_EDITOR_IDS.name);
+      const wallEl = document.getElementById(SELECTION_EDITOR_IDS.wall);
+      const posEl = document.getElementById(SELECTION_EDITOR_IDS.pos);
+      const lenEl = document.getElementById(SELECTION_EDITOR_IDS.len);
+      const depthEl = document.getElementById(SELECTION_EDITOR_IDS.depth);
+      if (!nameEl || !wallEl || !posEl || !lenEl) return;
+      const nextWall = wallEl.value;
+      if (!["top", "right", "bottom", "left"].includes(nextWall)) return;
+      const span = wallSpan(nextWall);
+      const step = currentGridCm();
+      if (span < step) {
+        setStatus("選択した壁にはこの要素を配置できません。", true);
+        return;
+      }
+      const rawLen = Number(lenEl.value);
+      const rawPos = Number(posEl.value);
+      if (!Number.isFinite(rawLen) || !Number.isFinite(rawPos)) {
+        setStatus("壁要素の数値入力が不正です。", true);
+        return;
+      }
+      const nextLen = clampAndSnap(rawLen, step, span);
+      const nextPos = clampWallPos(rawPos, nextLen, nextWall);
+      rememberCurrentState();
+      wall.name = String(nameEl.value || wall.name).trim() || wall.name;
+      wall.wall = nextWall;
+      wall.len = nextLen;
+      wall.pos = nextPos;
+      if (wall.render === "solid" && depthEl) {
+        const depthMax = nextWall === "top" || nextWall === "bottom" ? state.room.height : state.room.width;
+        wall.depth = clamp(Number(depthEl.value) || wall.depth, 10, depthMax);
+      }
+      update();
+      saveToLocalStorage();
+    }
+
     function exportLayoutJson() {
       const payload = {
         version: 2,
@@ -2019,15 +2789,44 @@
       setStatus("PNG画像を書き出しました。");
     }
 
+    function closeTutorial() {
+      tutorialEl.classList.remove("open");
+      try {
+        localStorage.setItem("room-layout-tutorial-v1", "seen");
+      } catch (_) {
+        // Ignore storage errors.
+      }
+    }
+
+    function maybeShowTutorial() {
+      try {
+        if (localStorage.getItem("room-layout-tutorial-v1") === "seen") return;
+      } catch (_) {
+        // Ignore storage errors.
+      }
+      tutorialEl.classList.add("open");
+    }
+
     presetEl.addEventListener("change", applyPreset);
-    wallTypeEl.addEventListener("change", applyWallPreset);
+    wallTypeEl.addEventListener("change", () => {
+      applyWallPreset();
+      update();
+    });
+    wallSideEl.addEventListener("change", update);
+    wallLenEl.addEventListener("input", update);
     addEl.addEventListener("click", addItem);
+    duplicateItemEl.addEventListener("click", duplicateSelectedFurniture);
     addWallEl.addEventListener("click", addWallItem);
     addSecondFloorEl.addEventListener("click", () => addStructureBlock("2f"));
     addLoftBlockEl.addEventListener("click", () => addStructureBlock("loft"));
     addBalconyBlockEl.addEventListener("click", () => addStructureBlock("balcony"));
     applyRoomEl.addEventListener("click", applyRoomSize);
     applyShapeEl.addEventListener("click", applyRoomShape);
+    gridSizeEl.addEventListener("change", applyGridSettings);
+    snapToggleEl.addEventListener("change", applyGridSettings);
+    applySelectionEl.addEventListener("click", applySelectionEdits);
+    duplicateSelectedEl.addEventListener("click", duplicateSelectedFurniture);
+    deleteSelectedBtnEl.addEventListener("click", removeSelected);
     undoEl.addEventListener("click", undo);
     redoEl.addEventListener("click", redo);
     downloadJsonEl.addEventListener("click", exportLayoutJson);
@@ -2036,6 +2835,10 @@
       if (file) importLayoutJson(file);
     });
     exportPngEl.addEventListener("click", exportCanvasPng);
+    closeTutorialEl.addEventListener("click", closeTutorial);
+    tutorialEl.addEventListener("click", (e) => {
+      if (e.target === tutorialEl) closeTutorial();
+    });
 
     document.addEventListener("keydown", (e) => {
       const activeTag = document.activeElement ? document.activeElement.tagName : "";
@@ -2052,7 +2855,7 @@
         return;
       }
       if (!state.selected) return;
-      const step = gridCm;
+      const step = currentGridCm();
       if (e.key === "ArrowUp") { e.preventDefault(); nudgeSelected(0, -step); return; }
       if (e.key === "ArrowDown") { e.preventDefault(); nudgeSelected(0, step); return; }
       if (e.key === "ArrowLeft") { e.preventDefault(); nudgeSelected(-step, 0); return; }
@@ -2064,6 +2867,10 @@
       }
     });
 
+    renderRoomTemplateButtons();
+    renderFurnitureCatalog();
+    gridSizeEl.value = String(state.gridCm);
+    snapToggleEl.checked = state.snapEnabled;
     loadBlockState("block-1f");
     applyPreset();
     applyWallPreset();
@@ -2071,6 +2878,7 @@
       setStatus("前回保存したレイアウトを復元しました。");
     }
     update();
+    maybeShowTutorial();
   </script>
 </body>
 </html>
