@@ -192,6 +192,11 @@
       box-shadow: inset 0 0 0 1px #0f766e;
       background: #f0fdfa;
     }
+    .block-item.locked {
+      border-style: dashed;
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
     .block-name {
       font-weight: 700;
       color: #1f2937;
@@ -777,7 +782,7 @@
     const roomTemplates = [
       { key: "6jo", label: "6畳", width: 273, height: 364, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } },
       { key: "8joSquare", label: "8畳正方形", width: 364, height: 364, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } },
-      { key: "singleStandard", label: "一人暮らし標準", width: 320, height: 430, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } }
+      { key: "singleStandard", label: "ワンルーム標準", width: 320, height: 430, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } }
     ];
     const WALL_ANGLE = { top: 0, right: 90, bottom: 180, left: 270 };
     const SELECTION_EDITOR_IDS = {
@@ -812,7 +817,8 @@
           room: createDefaultRoom(),
           items: [],
           wallItems: [],
-          visible: true
+          visible: true,
+          locked: false
         }
       ],
       activeBlockId: "block-1f"
@@ -909,6 +915,18 @@
       return state.blocks.find((b) => b.id === state.activeBlockId) || state.blocks[0];
     }
 
+    function activeBlockLocked() {
+      const active = getActiveBlock();
+      return !!(active && active.locked);
+    }
+
+    function ensureEditable(actionLabel) {
+      if (!activeBlockLocked()) return true;
+      const active = getActiveBlock();
+      setStatus(`${active ? active.label : "このフロア"} はロック中のため${actionLabel}できません。`, true);
+      return false;
+    }
+
     function saveActiveBlockState() {
       const block = getActiveBlock();
       if (!block) return;
@@ -994,6 +1012,7 @@
           if (!Number.isFinite(item.angle)) item.angle = 0;
         }
         block.visible = block.visible !== false;
+        block.locked = block.locked === true;
         extras.push(block);
       }
 
@@ -1006,7 +1025,8 @@
           room: createDefaultRoom(),
           items: [],
           wallItems: [],
-          visible: true
+          visible: true,
+          locked: false
         };
         typedByType.set("1f", firstFloor);
       }
@@ -1026,6 +1046,7 @@
           if (!Number.isFinite(item.angle)) item.angle = 0;
         }
         block.visible = block.visible !== false;
+        block.locked = block.locked === true;
         typed.push(block);
       }
 
@@ -1062,7 +1083,8 @@
         room: defaultRoomForStructure(type),
         items: [],
         wallItems: [],
-        visible: true
+        visible: true,
+        locked: false
       };
       state.blocks.push(block);
       loadBlockState(block.id);
@@ -1074,6 +1096,10 @@
     function removeStructureBlock(blockId) {
       const block = state.blocks.find((b) => b.id === blockId);
       if (!block || block.type === "1f") return;
+      if (block.locked === true) {
+        setStatus(`${block.label} はロック中のため削除できません。`, true);
+        return;
+      }
       rememberCurrentState();
       state.blocks = state.blocks.filter((b) => b.id !== blockId);
       if (state.activeBlockId === blockId) {
@@ -1284,7 +1310,8 @@
 
       ctx.fillStyle = active ? "#0f766e" : "#475569";
       ctx.font = "bold 13px sans-serif";
-      const label = viewport.block ? viewport.block.label : "";
+      const baseLabel = viewport.block ? viewport.block.label : "";
+      const label = viewport.block && viewport.block.locked ? `${baseLabel} [LOCK]` : baseLabel;
       ctx.fillText(label, viewport.x + 12, viewport.y + 20);
     }
 
@@ -1346,7 +1373,8 @@
             room: b.room || createDefaultRoom(),
             items: Array.isArray(b.items) ? b.items : [],
             wallItems: Array.isArray(b.wallItems) ? b.wallItems : [],
-            visible: b.visible !== false
+            visible: b.visible !== false,
+            locked: b.locked === true
           };
         });
         normalizeStructureBlocks();
@@ -1378,7 +1406,8 @@
             room: legacyRoom,
             items: Array.isArray(snapshot && snapshot.items) ? snapshot.items : [],
             wallItems: Array.isArray(snapshot && snapshot.wallItems) ? snapshot.wallItems : [],
-            visible: true
+            visible: true,
+            locked: false
           }
         ];
         state.gridCm = 10;
@@ -1532,11 +1561,37 @@
       renderSelectionEditor();
     }
 
+    function syncEditingLockUI() {
+      const locked = activeBlockLocked();
+      const controls = [
+        roomWEl, roomHEl, applyRoomEl,
+        cutTLWEl, cutTLHEl, cutTRWEl, cutTRHEl, cutBRWEl, cutBRHEl, cutBLWEl, cutBLHEl, applyShapeEl,
+        presetEl, wEl, hEl, addEl, wallTypeEl, wallSideEl, wallLenEl, addWallEl, clearEl
+      ];
+      for (const el of controls) {
+        if (el) el.disabled = locked;
+      }
+      for (const btn of roomTemplateButtonsEl.querySelectorAll("button")) {
+        btn.disabled = locked;
+      }
+      for (const btn of furnitureCatalogEl.querySelectorAll("button")) {
+        btn.disabled = locked;
+      }
+      for (const input of selectionEditorEl.querySelectorAll("input,select,button,textarea")) {
+        input.disabled = locked;
+      }
+      rotateEl.disabled = locked || !(state.selected && state.selected.kind === "item");
+      duplicateItemEl.disabled = locked || !(state.selected && state.selected.kind === "item");
+      applySelectionEl.disabled = locked || !state.selected;
+      duplicateSelectedEl.disabled = locked || !(state.selected && state.selected.kind === "item");
+      deleteSelectedBtnEl.disabled = locked || !state.selected;
+    }
+
     function renderBlockList() {
       blockListEl.innerHTML = "";
       for (const block of state.blocks) {
         const row = document.createElement("div");
-        row.className = `block-item${block.id === state.activeBlockId ? " active" : ""}`;
+        row.className = `block-item${block.id === state.activeBlockId ? " active" : ""}${block.locked ? " locked" : ""}`;
 
         const name = document.createElement("span");
         name.className = "block-name";
@@ -1576,6 +1631,29 @@
         toggleWrap.appendChild(toggle);
         toggleWrap.appendChild(toggleText);
         actions.appendChild(toggleWrap);
+
+        const lockWrap = document.createElement("label");
+        lockWrap.style.display = "flex";
+        lockWrap.style.alignItems = "center";
+        lockWrap.style.gap = "4px";
+        lockWrap.style.fontSize = "0.72rem";
+        lockWrap.style.color = "#475569";
+        const lock = document.createElement("input");
+        lock.type = "checkbox";
+        lock.checked = block.locked === true;
+        lock.onchange = () => {
+          rememberCurrentState();
+          block.locked = lock.checked;
+          update();
+          saveToLocalStorage();
+          if (block.locked) setStatus(`${block.label} をロックしました。`);
+          else setStatus(`${block.label} のロックを解除しました。`);
+        };
+        const lockText = document.createElement("span");
+        lockText.textContent = "ロック";
+        lockWrap.appendChild(lock);
+        lockWrap.appendChild(lockText);
+        actions.appendChild(lockWrap);
 
         const open = document.createElement("button");
         open.textContent = block.id === state.activeBlockId ? "編集中" : "切替";
@@ -1630,7 +1708,7 @@
       const nextGrid = Number(gridSizeEl.value);
       state.gridCm = [5, 10, 25].includes(nextGrid) ? nextGrid : 10;
       state.snapEnabled = !!snapToggleEl.checked;
-      normalizeToRoom();
+      if (!activeBlockLocked()) normalizeToRoom();
       update();
       saveToLocalStorage();
     }
@@ -1647,6 +1725,7 @@
     }
 
     function applyRoomTemplate(template) {
+      if (!ensureEditable("テンプレート適用")) return;
       rememberCurrentState();
       state.room.width = snap(clamp(template.width, 150, 1200));
       state.room.height = snap(clamp(template.height, 150, 1200));
@@ -1662,6 +1741,7 @@
     }
 
     function addPresetItem(preset) {
+      if (!ensureEditable("家具追加")) return;
       if (!preset) return;
       if (preset.w > state.room.width || preset.h > state.room.height) {
         setStatus("部屋サイズを超える家具は追加できません。", true);
@@ -1852,6 +1932,7 @@
     }
 
     function applyRoomSize() {
+      if (!ensureEditable("部屋サイズ変更")) return;
       const width = Number(roomWEl.value);
       const height = Number(roomHEl.value);
       if (!Number.isFinite(width) || !Number.isFinite(height) || width < 150 || height < 150) {
@@ -1877,6 +1958,7 @@
     }
 
     function applyRoomShape() {
+      if (!ensureEditable("部屋形状変更")) return;
       const raw = readCutsFromInputs();
       const normalized = normalizeCuts(raw, state.room.width, state.room.height);
       if (JSON.stringify(normalized) === JSON.stringify(state.room.cuts)) {
@@ -1892,6 +1974,7 @@
     }
 
     function addItem() {
+      if (!ensureEditable("家具追加")) return;
       const p = presets[Number(presetEl.value)];
       if (!p) return;
       const w = Number(wEl.value);
@@ -1917,6 +2000,7 @@
     }
 
     function addWallItem() {
+      if (!ensureEditable("壁要素追加")) return;
       const step = currentGridCm();
       const preset = wallPresets[Number(wallTypeEl.value)];
       const wall = wallSideEl.value;
@@ -2252,6 +2336,7 @@
         const del = document.createElement("button");
         del.textContent = "削除";
         del.onclick = () => {
+          if (!ensureEditable("削除")) return;
           rememberCurrentState();
           if (entry.kind === "item") state.items = state.items.filter((x) => x.id !== entry.obj.id);
           else state.wallItems = state.wallItems.filter((x) => x.id !== entry.obj.id);
@@ -2329,11 +2414,13 @@
       renderBlockList();
       renderList();
       updateSelectionInfo();
+      syncEditingLockUI();
       updateHistoryButtons();
       const active = getActiveBlock();
       gridInfoEl.textContent = `追加した面を同時表示 / グリッド: ${currentGridCm()}cm / スナップ${state.snapEnabled ? "ON" : "OFF"}`;
       const conflicts = detectConflicts();
       if (conflicts.length > 0) setStatus(conflicts[0], true);
+      else if (active && active.locked) setStatus(`${active.label}ブロックはロック中です。表示・確認のみ可能です。`);
       else setStatus(`${active ? active.label : "1階"}ブロックを編集中です。`);
     }
 
@@ -2442,6 +2529,30 @@
       }
 
       const metrics = getMetrics(viewport);
+      if (viewport.block.locked === true) {
+        const furniture = hitFurniture(p.x, p.y, metrics);
+        if (furniture) {
+          state.selected = { kind: "item", id: furniture.id };
+          state.drag = null;
+          update();
+          setStatus(`${viewport.block.label} はロック中です。編集するにはロック解除してください。`, true);
+          return;
+        }
+        const wallLocked = hitWallItem(p.x, p.y, metrics);
+        if (wallLocked) {
+          state.selected = { kind: "wall", id: wallLocked.id };
+          state.drag = null;
+          update();
+          setStatus(`${viewport.block.label} はロック中です。編集するにはロック解除してください。`, true);
+          return;
+        }
+        state.selected = null;
+        state.drag = null;
+        update();
+        setStatus(`${viewport.block.label} はロック中です。編集するにはロック解除してください。`, true);
+        return;
+      }
+
       const furniture = hitFurniture(p.x, p.y, metrics);
       if (furniture) {
         state.selected = { kind: "item", id: furniture.id };
@@ -2475,6 +2586,12 @@
 
     canvas.addEventListener("pointermove", (e) => {
       if (!state.drag) return;
+      if (activeBlockLocked()) {
+        history.dragStartSnapshot = null;
+        state.drag = null;
+        updateHistoryButtons();
+        return;
+      }
       if (state.activeBlockId !== state.drag.blockId) {
         loadBlockState(state.drag.blockId, false);
       }
@@ -2524,6 +2641,7 @@
     });
 
     rotateEl.addEventListener("click", () => {
+      if (!ensureEditable("回転")) return;
       if (!state.selected || state.selected.kind !== "item") {
         setStatus("回転する家具を選択してください。", true);
         return;
@@ -2549,6 +2667,7 @@
     });
 
     clearEl.addEventListener("click", () => {
+      if (!ensureEditable("全削除")) return;
       if (state.items.length === 0 && state.wallItems.length === 0) return;
       if (!window.confirm("現在のフロアの家具・壁要素をすべて削除します。よろしいですか？")) return;
       rememberCurrentState();
@@ -2578,6 +2697,7 @@
     }
 
     function removeSelected() {
+      if (!ensureEditable("削除")) return false;
       if (!state.selected) return false;
       rememberCurrentState();
       if (state.selected.kind === "item") {
@@ -2592,6 +2712,7 @@
     }
 
     function nudgeSelected(dx, dy) {
+      if (!ensureEditable("移動")) return false;
       if (!state.selected) return false;
       if (state.selected.kind === "item") {
         const it = state.items.find((x) => x.id === state.selected.id);
@@ -2625,6 +2746,7 @@
     }
 
     function duplicateSelectedFurniture() {
+      if (!ensureEditable("複製")) return false;
       const it = selectedItem();
       if (!it) {
         setStatus("複製する家具を選択してください。", true);
@@ -2655,6 +2777,7 @@
     }
 
     function applySelectionEdits() {
+      if (!ensureEditable("編集反映")) return;
       if (!state.selected) return;
       if (state.selected.kind === "item") {
         const it = selectedItem();
