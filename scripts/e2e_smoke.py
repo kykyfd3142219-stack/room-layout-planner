@@ -238,11 +238,11 @@ def run_checks(page):
     assert page.locator(".list .item").count() >= 3
 
     # wall elements: non-window types should be draggable
-    wall_types = ["引き戸", "スライドドア", "テレビのコンセント", "物置", "クローゼット"]
+    wall_types = ["引き戸", "スライドドア", "コンセント", "テレビのコンセント", "物置", "クローゼット"]
     initial_item_count = page.locator(".list .item").count()
     for index, wall_label in enumerate(wall_types):
         page.select_option("#wallType", label=wall_label)
-        if wall_label == "テレビのコンセント":
+        if wall_label in ["コンセント", "テレビのコンセント"]:
             page.fill("#wallLen", "24")
         elif wall_label == "物置":
             page.fill("#wallLen", "100")
@@ -256,7 +256,7 @@ def run_checks(page):
         assert "固定中" not in st2 and "ロック中" not in st2, f"unexpected lock state while adding wall: {st2}"
         wall_before = parse_wall_info(text(page.locator("#selectionInfo")))
         assert wall_before is not None, f"wall selection parse failed for {wall_label}"
-        if wall_label in ["テレビのコンセント", "物置", "クローゼット"]:
+        if wall_label in ["コンセント", "テレビのコンセント", "物置", "クローゼット"]:
             page.keyboard.press("ArrowRight")
             wall_after = parse_wall_info(text(page.locator("#selectionInfo")))
             assert wall_after is not None, f"wall selection lost during nudge for {wall_label}"

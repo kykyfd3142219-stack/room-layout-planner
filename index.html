@@ -944,7 +944,8 @@
       { key: "window", name: "窓", len: 120, depth: 0, color: "#0891b2", render: "line" },
       { key: "slidingDoor", name: "引き戸", len: 90, depth: 0, color: "#16a34a", render: "slidingDoor" },
       { key: "slideDoor", name: "スライドドア", len: 90, depth: 0, color: "#0284c7", render: "slideDoor" },
-      { key: "tvPlug", name: "テレビのコンセント", len: 24, depth: 0, color: "#dc2626", render: "plug" },
+      { key: "outlet", name: "コンセント", len: 16, depth: 0, color: "#ea580c", render: "plug", badge: "AC" },
+      { key: "tvPlug", name: "テレビのコンセント", len: 24, depth: 0, color: "#dc2626", render: "plug", badge: "TV" },
       { key: "storage", name: "物置", len: 100, depth: 60, color: "#a16207", render: "solid" },
       { key: "closet", name: "クローゼット", len: 180, depth: 0, color: "#7c3aed", render: "line" }
     ];
@@ -1441,6 +1442,7 @@
         if (!item.name) item.name = preset.name;
         if (!item.render) item.render = preset.render;
         if (!item.color) item.color = preset.color;
+        if (!item.badge && preset.badge) item.badge = preset.badge;
       }
       return item;
     }
@@ -2115,7 +2117,8 @@
         len: safeLen,
         depth: type.depth,
         color: type.color,
-        render: type.render
+        render: type.render,
+        badge: type.badge
       };
       if (isSlidingDoorRender(item.render)) {
         item.slideDir = defaultSlideDirection(item.wall, item.pos, item.len);
@@ -2326,6 +2329,7 @@
         depth: preset.depth,
         color: preset.color,
         render: preset.render,
+        badge: preset.badge,
         slideDir: isSlidingDoorRender(preset.render) ? defaultSlideDirection(wall, pos, len) : undefined,
         preview: true
       };
@@ -2337,7 +2341,7 @@
       ctx.save();
       ctx.globalAlpha = 0.46;
       if (preview.render === "solid") drawWallSolid(preview, metrics, false);
-      else if (preview.render === "plug") drawTvPlug(preview, metrics, false);
+      else if (preview.render === "plug") drawPlug(preview, metrics, false);
       else drawWallLine(preview, metrics, false);
       ctx.restore();
     }
@@ -2576,15 +2580,16 @@
       }
     }
 
-    function drawTvPlug(it, metrics, selected) {
+    function drawPlug(it, metrics, selected) {
       const c = wallCenterPx(it, metrics);
+      const badge = it.badge || (it.type === "tvPlug" ? "TV" : "AC");
       ctx.fillStyle = it.color;
       ctx.beginPath();
       ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 9px sans-serif";
-      ctx.fillText("TV", c.x - 6.5, c.y + 3);
+      ctx.fillText(badge, c.x - (badge.length === 2 ? 6.5 : 4.5), c.y + 3);
       if (selected) {
         ctx.strokeStyle = "#111827";
         ctx.lineWidth = 2;
@@ -2631,7 +2636,7 @@
       for (const it of state.wallItems) {
         if (it.render === "solid") continue;
         const selected = state.selected && state.selected.kind === "wall" && state.selected.id === it.id;
-        if (it.render === "plug") drawTvPlug(it, metrics, selected);
+        if (it.render === "plug") drawPlug(it, metrics, selected);
         else drawWallLine(it, metrics, selected);
       }
     }
