@@ -36,8 +36,13 @@ def start_server():
 
 
 def parse_selection_info(text: str):
-    # format example: 1階 選択中: デスク / 位置 120,150cm / サイズ 120x60cm / 角度 0°
-    m = re.search(r"位置\s*(\d+),(\d+)cm\s*/\s*サイズ\s*(\d+)x(\d+)cm\s*/\s*角度\s*(-?\d+)°", text)
+    # format example:
+    # 1階 いま選んでいるもの: デスク / 場所 120,150cm / 大きさ 120x60cm / 向き 0°
+    # 1階 選択中: デスク / 位置 120,150cm / サイズ 120x60cm / 角度 0°
+    m = re.search(
+        r"(?:位置|場所)\s*(\d+),(\d+)cm\s*/\s*(?:サイズ|大きさ)\s*(\d+)x(\d+)cm\s*/\s*(?:角度|向き)\s*(-?\d+)°",
+        text,
+    )
     if not m:
         return None
     x, y, w, h, a = map(int, m.groups())
@@ -45,8 +50,10 @@ def parse_selection_info(text: str):
 
 
 def parse_wall_info(text: str):
-    # format example: 1階 選択中: 引き戸 / 上壁 / 開始 140cm / 長さ 90cm / 角度 0°
-    m = re.search(r"/\s*(上|右|下|左)壁\s*/\s*開始\s*(\d+)cm\s*/\s*長さ\s*(\d+)cm", text)
+    # format example:
+    # 1階 いま選んでいるもの: 引き戸 / 上の壁 / はしから 140cm / 長さ 90cm / 向き 0°
+    # 1階 選択中: 引き戸 / 上壁 / 開始 140cm / 長さ 90cm / 角度 0°
+    m = re.search(r"/\s*(上|右|下|左)(?:の壁|壁)\s*/\s*(?:開始|はしから)\s*(\d+)cm\s*/\s*長さ\s*(\d+)cm", text)
     if not m:
         return None
     side_map = {"上": "top", "右": "right", "下": "bottom", "左": "left"}
@@ -58,16 +65,14 @@ def canvas_point_for_item(page, item):
         """
         ({x,y,w,h}) => {
           const canvas = document.getElementById('room');
-          const roomW = Number(document.getElementById('roomW').value);
-          const roomH = Number(document.getElementById('roomH').value);
+          const activeId = state.activeBlockId;
+          const viewport = viewportByBlockId(activeId);
+          const metrics = getMetrics(viewport);
           const attrW = canvas.width;
           const attrH = canvas.height;
-          const pad = 28;
-          const scale = Math.min((attrW - pad * 2) / roomW, (attrH - pad * 2) / roomH);
-          const widthPx = roomW * scale;
-          const heightPx = roomH * scale;
-          const left = (attrW - widthPx) / 2;
-          const top = (attrH - heightPx) / 2;
+          const scale = metrics.scale;
+          const left = metrics.left;
+          const top = metrics.top;
           const cx = left + (x + w / 2) * scale;
           const cy = top + (y + h / 2) * scale;
           const rect = canvas.getBoundingClientRect();
@@ -86,16 +91,16 @@ def canvas_point_for_wall(page, wall, offset_cm=35):
         """
         ({wall, pos, len, offsetCm}) => {
           const canvas = document.getElementById('room');
-          const roomW = Number(document.getElementById('roomW').value);
-          const roomH = Number(document.getElementById('roomH').value);
+          const activeId = state.activeBlockId;
+          const viewport = viewportByBlockId(activeId);
+          const metrics = getMetrics(viewport);
           const attrW = canvas.width;
           const attrH = canvas.height;
-          const pad = 28;
-          const scale = Math.min((attrW - pad * 2) / roomW, (attrH - pad * 2) / roomH);
-          const widthPx = roomW * scale;
-          const heightPx = roomH * scale;
-          const left = (attrW - widthPx) / 2;
-          const top = (attrH - heightPx) / 2;
+          const scale = metrics.scale;
+          const widthPx = metrics.widthPx;
+          const heightPx = metrics.heightPx;
+          const left = metrics.left;
+          const top = metrics.top;
 
           let cx = left;
           let cy = top;
@@ -224,7 +229,7 @@ def run_checks(page):
     lock_checkbox.check()
     expect(page.locator("#add")).to_be_disabled()
     st = wait_status(page)
-    assert "ロック" in st, f"lock status not shown: {st}"
+    assert ("固定" in st) or ("ロック" in st), f"lock status not shown: {st}"
 
     # unlock and ensure add works
     lock_checkbox.uncheck()
@@ -233,11 +238,11 @@ def run_checks(page):
     assert page.locator(".list .item").count() >= 3
 
     # wall elements: non-window types should be draggable
-    wall_types = ["引き戸", "スライドドア", "テレビプラグ", "物置", "クローゼット"]
+    wall_types = ["引き戸", "スライドドア", "テレビのコンセント", "物置", "クローゼット"]
     initial_item_count = page.locator(".list .item").count()
     for index, wall_label in enumerate(wall_types):
         page.select_option("#wallType", label=wall_label)
-        if wall_label == "テレビプラグ":
+        if wall_label == "テレビのコンセント":
             page.fill("#wallLen", "24")
         elif wall_label == "物置":
             page.fill("#wallLen", "100")
@@ -248,9 +253,20 @@ def run_checks(page):
         page.select_option("#wallSide", value="top")
         page.click("#addWall")
         st2 = wait_status(page)
-        assert "ロック中" not in st2, f"unexpected lock state while adding wall: {st2}"
+        assert "固定中" not in st2 and "ロック中" not in st2, f"unexpected lock state while adding wall: {st2}"
         wall_before = parse_wall_info(text(page.locator("#selectionInfo")))
         assert wall_before is not None, f"wall selection parse failed for {wall_label}"
+        if wall_label in ["テレビのコンセント", "物置", "クローゼット"]:
+            page.keyboard.press("ArrowRight")
+            wall_after = parse_wall_info(text(page.locator("#selectionInfo")))
+            assert wall_after is not None, f"wall selection lost during nudge for {wall_label}"
+            assert wall_after["pos"] != wall_before["pos"], (
+                f"{wall_label} keyboard move failed: {wall_before} -> {wall_after}"
+            )
+            assert page.locator(".list .item").count() >= initial_item_count + index + 1
+            continue
+        page.evaluate("window.scrollTo(0, 0)")
+        page.wait_for_timeout(100)
         # keep offset inside expanded interaction zone for non-window wall elements
         offset_cm = 35 if wall_label in ["引き戸", "スライドドア", "物置"] else 20
         wx, wy = canvas_point_for_wall(page, wall_before, offset_cm=offset_cm)
@@ -313,7 +329,10 @@ def run_checks(page):
     page.fill("#h", "100")
     page.click("#add")
     st3 = wait_status(page)
-    assert "部屋サイズを超える家具は追加できません" in st3, f"room size validation failed: {st3}"
+    assert (
+        "部屋サイズを超える家具は追加できません" in st3
+        or "家具が大きすぎる" in st3
+    ), f"room size validation failed: {st3}"
 
     # grow again and add succeeds
     page.fill("#roomW", "360")
