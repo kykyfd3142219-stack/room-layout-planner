@@ -196,6 +196,24 @@ def run_checks(page):
         f"drag move failed before={parsed2} after={parsed3}"
     )
 
+    # kitchenette presets exist and can be selected
+    kitchen_value = page.eval_on_selector(
+        "#preset",
+        """(sel) => {
+          const opt = [...sel.options].find(o => o.textContent.includes(' / ミニキッチン ('));
+          return opt ? opt.value : null;
+        }""",
+    )
+    sink_value = page.eval_on_selector(
+        "#preset",
+        """(sel) => {
+          const opt = [...sel.options].find(o => o.textContent.includes(' / 流し台 ('));
+          return opt ? opt.value : null;
+        }""",
+    )
+    assert kitchen_value is not None, "ミニキッチン option not found"
+    assert sink_value is not None, "流し台 option not found"
+
     # selection size edit reflect
     page.fill("#selW", "140")
     page.fill("#selH", "70")
