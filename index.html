@@ -108,9 +108,12 @@
     }
     .file-actions {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 6px;
-      align-items: center;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(280px, 1.2fr) minmax(170px, 0.9fr);
+      gap: 8px;
+      align-items: end;
+    }
+    .file-actions > * {
+      min-width: 0;
     }
     .file-actions label {
       display: grid;
@@ -118,9 +121,15 @@
       font-size: 0.75rem;
       color: #475569;
       font-weight: 700;
+      min-width: 0;
+      overflow: hidden;
     }
     .file-actions input[type="file"] {
       font-size: 0.74rem;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
     }
     .app {
       max-width: 1380px;
@@ -602,6 +611,14 @@
       .selection-actions { grid-template-columns: 1fr; }
       .template-grid { grid-template-columns: 1fr; }
       .grid-tools { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 1240px) {
+      .file-actions {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      }
+      .file-actions label {
+        grid-column: span 2;
+      }
     }
   </style>
 </head>
