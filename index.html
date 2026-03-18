@@ -788,6 +788,7 @@
           <details>
             <summary>部屋の形を変える</summary>
             <div class="details-body">
+              <p class="inline-note">四隅をけずるだけでなく、壁の途中もへこませられます。ワンルームの玄関横やキッチン横のくぼみを作りたいときに使えます。</p>
               <label>
                 左上をけずる幅 (cm)
                 <input id="cutTLW" type="number" min="0" max="1200" step="10" value="0" />
@@ -819,6 +820,55 @@
               <label>
                 左下をけずる深さ (cm)
                 <input id="cutBLH" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <div class="section-title">壁の途中のへこみ</div>
+              <label>
+                上の壁 へこみのはじ (cm)
+                <input id="notchTopStart" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                上の壁 へこみの長さ (cm)
+                <input id="notchTopLen" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                上の壁 へこみの深さ (cm)
+                <input id="notchTopDepth" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                右の壁 へこみのはじ (cm)
+                <input id="notchRightStart" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                右の壁 へこみの長さ (cm)
+                <input id="notchRightLen" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                右の壁 へこみの深さ (cm)
+                <input id="notchRightDepth" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                下の壁 へこみのはじ (cm)
+                <input id="notchBottomStart" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                下の壁 へこみの長さ (cm)
+                <input id="notchBottomLen" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                下の壁 へこみの深さ (cm)
+                <input id="notchBottomDepth" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                左の壁 へこみのはじ (cm)
+                <input id="notchLeftStart" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                左の壁 へこみの長さ (cm)
+                <input id="notchLeftLen" type="number" min="0" max="1200" step="10" value="0" />
+              </label>
+              <label>
+                左の壁 へこみの深さ (cm)
+                <input id="notchLeftDepth" type="number" min="0" max="1200" step="10" value="0" />
               </label>
               <button id="applyShape" class="cta-quiet">この形にする</button>
             </div>
@@ -915,16 +965,30 @@
   </div>
 
   <script>
+    function createZeroCuts() {
+      return {
+        tl: { w: 0, h: 0 },
+        tr: { w: 0, h: 0 },
+        br: { w: 0, h: 0 },
+        bl: { w: 0, h: 0 }
+      };
+    }
+
+    function createZeroNotches() {
+      return {
+        top: { offset: 0, len: 0, depth: 0 },
+        right: { offset: 0, len: 0, depth: 0 },
+        bottom: { offset: 0, len: 0, depth: 0 },
+        left: { offset: 0, len: 0, depth: 0 }
+      };
+    }
+
     function createDefaultRoom() {
       return {
         width: 364,
         height: 364,
-        cuts: {
-          tl: { w: 0, h: 0 },
-          tr: { w: 0, h: 0 },
-          br: { w: 0, h: 0 },
-          bl: { w: 0, h: 0 }
-        }
+        cuts: createZeroCuts(),
+        notches: createZeroNotches()
       };
     }
 
@@ -936,6 +1000,8 @@
       { category: "勉強・作業", name: "デスクチェア", w: 60, h: 60, color: "#15803d" },
       { category: "水まわり", name: "ミニキッチン", w: 120, h: 60, color: "#0f766e" },
       { category: "水まわり", name: "流し台", w: 90, h: 60, color: "#14b8a6" },
+      { category: "水まわり", name: "冷蔵庫", w: 65, h: 65, color: "#2563eb" },
+      { category: "水まわり", name: "洗濯機置き場", w: 70, h: 70, color: "#60a5fa" },
       { category: "移動", name: "階段", w: 90, h: 180, color: "#8b5e3c" },
       { category: "しきもの", name: "カーペット", w: 180, h: 140, color: "#c2410c" },
       { category: "しまう", name: "本棚", w: 90, h: 30, color: "#6366f1" },
@@ -952,9 +1018,9 @@
       { key: "closet", name: "クローゼット", len: 180, depth: 0, color: "#7c3aed", render: "line" }
     ];
     const roomTemplates = [
-      { key: "6jo", label: "6畳", width: 273, height: 364, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } },
-      { key: "8joSquare", label: "8畳正方形", width: 364, height: 364, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } },
-      { key: "singleStandard", label: "ワンルーム標準", width: 320, height: 430, cuts: { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } } }
+      { key: "6jo", label: "6畳", width: 273, height: 364, cuts: createZeroCuts(), notches: createZeroNotches() },
+      { key: "8joSquare", label: "8畳正方形", width: 364, height: 364, cuts: createZeroCuts(), notches: createZeroNotches() },
+      { key: "singleStandard", label: "ワンルーム標準", width: 320, height: 430, cuts: createZeroCuts(), notches: createZeroNotches() }
     ];
     const WALL_ANGLE = { top: 0, right: 90, bottom: 180, left: 270 };
     const DOOR_CLEARANCE_CM = 70;
@@ -1021,6 +1087,18 @@
     const cutBRHEl = document.getElementById("cutBRH");
     const cutBLWEl = document.getElementById("cutBLW");
     const cutBLHEl = document.getElementById("cutBLH");
+    const notchTopStartEl = document.getElementById("notchTopStart");
+    const notchTopLenEl = document.getElementById("notchTopLen");
+    const notchTopDepthEl = document.getElementById("notchTopDepth");
+    const notchRightStartEl = document.getElementById("notchRightStart");
+    const notchRightLenEl = document.getElementById("notchRightLen");
+    const notchRightDepthEl = document.getElementById("notchRightDepth");
+    const notchBottomStartEl = document.getElementById("notchBottomStart");
+    const notchBottomLenEl = document.getElementById("notchBottomLen");
+    const notchBottomDepthEl = document.getElementById("notchBottomDepth");
+    const notchLeftStartEl = document.getElementById("notchLeftStart");
+    const notchLeftLenEl = document.getElementById("notchLeftLen");
+    const notchLeftDepthEl = document.getElementById("notchLeftDepth");
     const applyShapeEl = document.getElementById("applyShape");
     const presetEl = document.getElementById("preset");
     const wEl = document.getElementById("w");
@@ -1090,6 +1168,28 @@
         .replaceAll("'", "&#39;");
     }
 
+    function normalizeRoomData(room) {
+      const safeRoom = room && typeof room === "object" ? room : {};
+      const safeCuts = safeRoom.cuts && typeof safeRoom.cuts === "object" ? safeRoom.cuts : createZeroCuts();
+      const safeNotches = safeRoom.notches && typeof safeRoom.notches === "object" ? safeRoom.notches : createZeroNotches();
+      return {
+        width: Number(safeRoom.width) || 364,
+        height: Number(safeRoom.height) || 364,
+        cuts: {
+          tl: { w: Number(safeCuts.tl && safeCuts.tl.w) || 0, h: Number(safeCuts.tl && safeCuts.tl.h) || 0 },
+          tr: { w: Number(safeCuts.tr && safeCuts.tr.w) || 0, h: Number(safeCuts.tr && safeCuts.tr.h) || 0 },
+          br: { w: Number(safeCuts.br && safeCuts.br.w) || 0, h: Number(safeCuts.br && safeCuts.br.h) || 0 },
+          bl: { w: Number(safeCuts.bl && safeCuts.bl.w) || 0, h: Number(safeCuts.bl && safeCuts.bl.h) || 0 }
+        },
+        notches: {
+          top: { offset: Number(safeNotches.top && safeNotches.top.offset) || 0, len: Number(safeNotches.top && safeNotches.top.len) || 0, depth: Number(safeNotches.top && safeNotches.top.depth) || 0 },
+          right: { offset: Number(safeNotches.right && safeNotches.right.offset) || 0, len: Number(safeNotches.right && safeNotches.right.len) || 0, depth: Number(safeNotches.right && safeNotches.right.depth) || 0 },
+          bottom: { offset: Number(safeNotches.bottom && safeNotches.bottom.offset) || 0, len: Number(safeNotches.bottom && safeNotches.bottom.len) || 0, depth: Number(safeNotches.bottom && safeNotches.bottom.depth) || 0 },
+          left: { offset: Number(safeNotches.left && safeNotches.left.offset) || 0, len: Number(safeNotches.left && safeNotches.left.len) || 0, depth: Number(safeNotches.left && safeNotches.left.depth) || 0 }
+        }
+      };
+    }
+
     function getActiveBlock() {
       return state.blocks.find((b) => b.id === state.activeBlockId) || state.blocks[0];
     }
@@ -1118,7 +1218,9 @@
       const block = state.blocks.find((b) => b.id === blockId);
       if (!block) return false;
       state.activeBlockId = block.id;
-      state.room = deepCopy(block.room);
+      state.room = normalizeRoomData(deepCopy(block.room));
+      state.room.cuts = normalizeCuts(state.room.cuts, state.room.width, state.room.height);
+      state.room.notches = normalizeNotches(state.room.notches, state.room.width, state.room.height, state.room.cuts);
       state.items = deepCopy(block.items || []);
       state.wallItems = deepCopy(block.wallItems || []);
       state.drag = null;
@@ -1156,12 +1258,8 @@
       return {
         width: snap(clamp(room.width, 150, 1200)),
         height: snap(clamp(Math.round(room.height * 0.4), 150, 400)),
-        cuts: {
-          tl: { w: 0, h: 0 },
-          tr: { w: 0, h: 0 },
-          br: { w: 0, h: 0 },
-          bl: { w: 0, h: 0 }
-        }
+        cuts: createZeroCuts(),
+        notches: createZeroNotches()
       };
     }
 
@@ -1184,7 +1282,7 @@
           if (!typedByType.has(type)) typedByType.set(type, block);
           continue;
         }
-        if (!block.room) block.room = createDefaultRoom();
+        block.room = normalizeRoomData(block.room || createDefaultRoom());
         if (!Array.isArray(block.items)) block.items = [];
         if (!Array.isArray(block.wallItems)) block.wallItems = [];
         for (const item of block.items) {
@@ -1221,7 +1319,7 @@
         if (!block) continue;
         block.type = type;
         block.label = blockLabelByType(type, i);
-        if (!block.room) block.room = defaultRoomForStructure(type, sourceRoom);
+        block.room = normalizeRoomData(block.room || defaultRoomForStructure(type, sourceRoom));
         if (!Array.isArray(block.items)) block.items = [];
         if (!Array.isArray(block.wallItems)) block.wallItems = [];
         for (const item of block.items) {
@@ -1325,6 +1423,15 @@
       };
     }
 
+    function copyNotches(notches) {
+      return {
+        top: { offset: notches.top.offset, len: notches.top.len, depth: notches.top.depth },
+        right: { offset: notches.right.offset, len: notches.right.len, depth: notches.right.depth },
+        bottom: { offset: notches.bottom.offset, len: notches.bottom.len, depth: notches.bottom.depth },
+        left: { offset: notches.left.offset, len: notches.left.len, depth: notches.left.depth }
+      };
+    }
+
     function normalizeCuts(cuts, width, height) {
       const out = copyCuts(cuts);
       const step = currentGridCm();
@@ -1364,12 +1471,84 @@
       return out;
     }
 
+    function wallBaseRange(wall, cuts = state.room.cuts, width = state.room.width, height = state.room.height) {
+      let start = 0;
+      let end = 0;
+      if (wall === "top") {
+        start = cuts.tl.w;
+        end = width - cuts.tr.w;
+      } else if (wall === "right") {
+        start = cuts.tr.h;
+        end = height - cuts.br.h;
+      } else if (wall === "bottom") {
+        start = cuts.bl.w;
+        end = width - cuts.br.w;
+      } else {
+        start = cuts.tl.h;
+        end = height - cuts.bl.h;
+      }
+      if (end < start) end = start;
+      return { start, end };
+    }
+
+    function normalizeSingleNotch(notch, wall, cuts, width, height) {
+      const step = currentGridCm();
+      const base = wallBaseRange(wall, cuts, width, height);
+      const span = Math.max(0, base.end - base.start);
+      const depthMax = wall === "top" || wall === "bottom"
+        ? Math.max(0, height - step)
+        : Math.max(0, width - step);
+      let len = clampAndSnap(Number(notch && notch.len) || 0, 0, span);
+      let depth = clampAndSnap(Number(notch && notch.depth) || 0, 0, depthMax);
+      if (len < step || depth < step || span < step) {
+        return { offset: 0, len: 0, depth: 0 };
+      }
+      const maxOffset = Math.max(base.start, base.end - len);
+      const offset = clampAndSnap(Number(notch && notch.offset) || base.start, base.start, maxOffset);
+      return { offset, len, depth };
+    }
+
+    function normalizeNotches(notches, width, height, cuts) {
+      const raw = copyNotches(notches || createZeroNotches());
+      return {
+        top: normalizeSingleNotch(raw.top, "top", cuts, width, height),
+        right: normalizeSingleNotch(raw.right, "right", cuts, width, height),
+        bottom: normalizeSingleNotch(raw.bottom, "bottom", cuts, width, height),
+        left: normalizeSingleNotch(raw.left, "left", cuts, width, height)
+      };
+    }
+
     function readCutsFromInputs() {
       return {
         tl: { w: Number(cutTLWEl.value) || 0, h: Number(cutTLHEl.value) || 0 },
         tr: { w: Number(cutTRWEl.value) || 0, h: Number(cutTRHEl.value) || 0 },
         br: { w: Number(cutBRWEl.value) || 0, h: Number(cutBRHEl.value) || 0 },
         bl: { w: Number(cutBLWEl.value) || 0, h: Number(cutBLHEl.value) || 0 }
+      };
+    }
+
+    function readNotchesFromInputs() {
+      return {
+        top: {
+          offset: Number(notchTopStartEl.value) || 0,
+          len: Number(notchTopLenEl.value) || 0,
+          depth: Number(notchTopDepthEl.value) || 0
+        },
+        right: {
+          offset: Number(notchRightStartEl.value) || 0,
+          len: Number(notchRightLenEl.value) || 0,
+          depth: Number(notchRightDepthEl.value) || 0
+        },
+        bottom: {
+          offset: Number(notchBottomStartEl.value) || 0,
+          len: Number(notchBottomLenEl.value) || 0,
+          depth: Number(notchBottomDepthEl.value) || 0
+        },
+        left: {
+          offset: Number(notchLeftStartEl.value) || 0,
+          len: Number(notchLeftLenEl.value) || 0,
+          depth: Number(notchLeftDepthEl.value) || 0
+        }
       };
     }
 
@@ -1382,49 +1561,72 @@
       cutBRHEl.value = String(state.room.cuts.br.h);
       cutBLWEl.value = String(state.room.cuts.bl.w);
       cutBLHEl.value = String(state.room.cuts.bl.h);
+      notchTopStartEl.value = String(state.room.notches.top.offset);
+      notchTopLenEl.value = String(state.room.notches.top.len);
+      notchTopDepthEl.value = String(state.room.notches.top.depth);
+      notchRightStartEl.value = String(state.room.notches.right.offset);
+      notchRightLenEl.value = String(state.room.notches.right.len);
+      notchRightDepthEl.value = String(state.room.notches.right.depth);
+      notchBottomStartEl.value = String(state.room.notches.bottom.offset);
+      notchBottomLenEl.value = String(state.room.notches.bottom.len);
+      notchBottomDepthEl.value = String(state.room.notches.bottom.depth);
+      notchLeftStartEl.value = String(state.room.notches.left.offset);
+      notchLeftLenEl.value = String(state.room.notches.left.len);
+      notchLeftDepthEl.value = String(state.room.notches.left.depth);
     }
 
     function getCutRects() {
       const cuts = state.room.cuts;
+      const notches = state.room.notches || createZeroNotches();
       const out = [];
       if (cuts.tl.w > 0 && cuts.tl.h > 0) out.push({ x1: 0, y1: 0, x2: cuts.tl.w, y2: cuts.tl.h });
       if (cuts.tr.w > 0 && cuts.tr.h > 0) out.push({ x1: state.room.width - cuts.tr.w, y1: 0, x2: state.room.width, y2: cuts.tr.h });
       if (cuts.br.w > 0 && cuts.br.h > 0) out.push({ x1: state.room.width - cuts.br.w, y1: state.room.height - cuts.br.h, x2: state.room.width, y2: state.room.height });
       if (cuts.bl.w > 0 && cuts.bl.h > 0) out.push({ x1: 0, y1: state.room.height - cuts.bl.h, x2: cuts.bl.w, y2: state.room.height });
+      if (notches.top.len > 0 && notches.top.depth > 0) out.push({ x1: notches.top.offset, y1: 0, x2: notches.top.offset + notches.top.len, y2: notches.top.depth });
+      if (notches.right.len > 0 && notches.right.depth > 0) out.push({ x1: state.room.width - notches.right.depth, y1: notches.right.offset, x2: state.room.width, y2: notches.right.offset + notches.right.len });
+      if (notches.bottom.len > 0 && notches.bottom.depth > 0) out.push({ x1: notches.bottom.offset, y1: state.room.height - notches.bottom.depth, x2: notches.bottom.offset + notches.bottom.len, y2: state.room.height });
+      if (notches.left.len > 0 && notches.left.depth > 0) out.push({ x1: 0, y1: notches.left.offset, x2: notches.left.depth, y2: notches.left.offset + notches.left.len });
       return out;
     }
 
-    function getMainWallRange(wall) {
-      const cuts = state.room.cuts;
-      let start = 0;
-      let end = 0;
-      if (wall === "top") {
-        start = cuts.tl.w;
-        end = state.room.width - cuts.tr.w;
-      } else if (wall === "right") {
-        start = cuts.tr.h;
-        end = state.room.height - cuts.br.h;
-      } else if (wall === "bottom") {
-        start = cuts.bl.w;
-        end = state.room.width - cuts.br.w;
-      } else {
-        start = cuts.tl.h;
-        end = state.room.height - cuts.bl.h;
+    function getWallSegments(wall) {
+      const base = wallBaseRange(wall);
+      const notch = (state.room.notches || createZeroNotches())[wall] || { offset: 0, len: 0, depth: 0 };
+      if (!(notch.len > 0 && notch.depth > 0)) {
+        return base.end > base.start ? [base] : [];
       }
-      if (end < start) end = start;
-      return { start, end };
+      const segments = [];
+      if (notch.offset > base.start) segments.push({ start: base.start, end: notch.offset });
+      if (notch.offset + notch.len < base.end) segments.push({ start: notch.offset + notch.len, end: base.end });
+      return segments.filter((seg) => seg.end > seg.start);
     }
 
     function wallSpan(wall) {
-      const range = getMainWallRange(wall);
-      return Math.max(0, range.end - range.start);
+      const segments = getWallSegments(wall);
+      if (segments.length === 0) return 0;
+      return Math.max(...segments.map((seg) => Math.max(0, seg.end - seg.start)));
+    }
+
+    function getSegmentForWallItem(wall, pos, len) {
+      const segments = getWallSegments(wall).filter((seg) => seg.end - seg.start >= len);
+      if (segments.length === 0) return null;
+      let best = null;
+      let bestDistance = Infinity;
+      for (const seg of segments) {
+        const nextPos = clampAndSnap(pos, seg.start, Math.max(seg.start, seg.end - len));
+        const distance = Math.abs(nextPos - pos);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = { start: seg.start, end: seg.end, pos: nextPos };
+        }
+      }
+      return best;
     }
 
     function clampWallPos(pos, len, wall) {
-      const range = getMainWallRange(wall);
-      const min = range.start;
-      const max = Math.max(min, range.end - len);
-      return clampAndSnap(pos, min, max);
+      const segment = getSegmentForWallItem(wall, pos, len);
+      return segment ? segment.pos : 0;
     }
 
     function isSlidingDoorRender(render) {
@@ -1450,9 +1652,10 @@
     }
 
     function defaultSlideDirection(wall, pos, len) {
-      const range = getMainWallRange(wall);
+      const segment = getSegmentForWallItem(wall, pos, len);
+      if (!segment) return 1;
       const center = pos + len / 2;
-      const mid = (range.start + range.end) / 2;
+      const mid = (segment.start + segment.end) / 2;
       return center <= mid ? 1 : -1;
     }
 
@@ -1584,7 +1787,7 @@
             id: b.id || crypto.randomUUID(),
             type,
             label,
-            room: b.room || createDefaultRoom(),
+            room: normalizeRoomData(b.room),
             items: Array.isArray(b.items) ? b.items : [],
             wallItems: Array.isArray(b.wallItems) ? b.wallItems.map((it) => normalizeLegacyWallItem(it)) : [],
             visible: b.visible !== false,
@@ -1599,19 +1802,7 @@
         state.selected = snapshot.selected || null;
       } else {
         // Backward-compatible load for old single-floor snapshot format.
-        const defaultCuts = { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } };
-        const safeRoom = (snapshot && snapshot.room) || { width: 364, height: 364, cuts: defaultCuts };
-        const safeCuts = safeRoom.cuts || defaultCuts;
-        const legacyRoom = {
-          width: Number(safeRoom.width) || 364,
-          height: Number(safeRoom.height) || 364,
-          cuts: {
-            tl: { w: Number(safeCuts.tl && safeCuts.tl.w) || 0, h: Number(safeCuts.tl && safeCuts.tl.h) || 0 },
-            tr: { w: Number(safeCuts.tr && safeCuts.tr.w) || 0, h: Number(safeCuts.tr && safeCuts.tr.h) || 0 },
-            br: { w: Number(safeCuts.br && safeCuts.br.w) || 0, h: Number(safeCuts.br && safeCuts.br.h) || 0 },
-            bl: { w: Number(safeCuts.bl && safeCuts.bl.w) || 0, h: Number(safeCuts.bl && safeCuts.bl.h) || 0 }
-          }
-        };
+        const legacyRoom = normalizeRoomData((snapshot && snapshot.room) || createDefaultRoom());
         state.blocks = [
           {
             id: "block-1f",
@@ -1781,7 +1972,12 @@
       const locked = activeBlockLocked();
       const controls = [
         roomWEl, roomHEl, applyRoomEl,
-        cutTLWEl, cutTLHEl, cutTRWEl, cutTRHEl, cutBRWEl, cutBRHEl, cutBLWEl, cutBLHEl, applyShapeEl,
+        cutTLWEl, cutTLHEl, cutTRWEl, cutTRHEl, cutBRWEl, cutBRHEl, cutBLWEl, cutBLHEl,
+        notchTopStartEl, notchTopLenEl, notchTopDepthEl,
+        notchRightStartEl, notchRightLenEl, notchRightDepthEl,
+        notchBottomStartEl, notchBottomLenEl, notchBottomDepthEl,
+        notchLeftStartEl, notchLeftLenEl, notchLeftDepthEl,
+        applyShapeEl,
         presetEl, wEl, hEl, addEl, wallTypeEl, wallSideEl, wallLenEl, addWallEl, clearEl
       ];
       for (const el of controls) {
@@ -1945,8 +2141,10 @@
       rememberCurrentState();
       state.room.width = snap(clamp(template.width, 150, 1200));
       state.room.height = snap(clamp(template.height, 150, 1200));
-      const nextCuts = template.cuts ? deepCopy(template.cuts) : { tl: { w: 0, h: 0 }, tr: { w: 0, h: 0 }, br: { w: 0, h: 0 }, bl: { w: 0, h: 0 } };
+      const nextCuts = template.cuts ? deepCopy(template.cuts) : createZeroCuts();
+      const nextNotches = template.notches ? deepCopy(template.notches) : createZeroNotches();
       state.room.cuts = normalizeCuts(nextCuts, state.room.width, state.room.height);
+      state.room.notches = normalizeNotches(nextNotches, state.room.width, state.room.height, state.room.cuts);
       roomWEl.value = String(state.room.width);
       roomHEl.value = String(state.room.height);
       setShapeInputsFromState();
@@ -2108,8 +2306,13 @@
       const span = wallSpan(wall);
       if (span < step) return null;
       const safeLen = clampAndSnap(len, step, span);
-      const range = getMainWallRange(wall);
-      const pos = clampAndSnap(range.start + (span - safeLen) / 2, range.start, range.end - safeLen);
+      const segments = getWallSegments(wall).filter((seg) => seg.end - seg.start >= safeLen);
+      if (segments.length === 0) return null;
+      const preferred = segments.reduce((best, seg) => {
+        if (!best) return seg;
+        return (seg.end - seg.start) > (best.end - best.start) ? seg : best;
+      }, null);
+      const pos = clampAndSnap(preferred.start + ((preferred.end - preferred.start) - safeLen) / 2, preferred.start, preferred.end - safeLen);
       const item = {
         id: crypto.randomUUID(),
         type: type.key,
@@ -2228,6 +2431,7 @@
       state.room.width = nextW;
       state.room.height = nextH;
       state.room.cuts = normalizeCuts(state.room.cuts, state.room.width, state.room.height);
+      state.room.notches = normalizeNotches(state.room.notches, state.room.width, state.room.height, state.room.cuts);
       roomWEl.value = String(state.room.width);
       roomHEl.value = String(state.room.height);
       setShapeInputsFromState();
@@ -2238,14 +2442,20 @@
 
     function applyRoomShape() {
       if (!ensureEditable("部屋の形を変えること")) return;
-      const raw = readCutsFromInputs();
-      const normalized = normalizeCuts(raw, state.room.width, state.room.height);
-      if (JSON.stringify(normalized) === JSON.stringify(state.room.cuts)) {
+      const rawCuts = readCutsFromInputs();
+      const normalizedCuts = normalizeCuts(rawCuts, state.room.width, state.room.height);
+      const rawNotches = readNotchesFromInputs();
+      const normalizedNotches = normalizeNotches(rawNotches, state.room.width, state.room.height, normalizedCuts);
+      if (
+        JSON.stringify(normalizedCuts) === JSON.stringify(state.room.cuts)
+        && JSON.stringify(normalizedNotches) === JSON.stringify(state.room.notches)
+      ) {
         setStatus("部屋の形は変わっていません。");
         return;
       }
       rememberCurrentState();
-      state.room.cuts = normalized;
+      state.room.cuts = normalizedCuts;
+      state.room.notches = normalizedNotches;
       setShapeInputsFromState();
       normalizeToRoom();
       update();
@@ -2319,8 +2529,13 @@
       const requestedLen = Number(wallLenEl.value);
       if (!Number.isFinite(requestedLen)) return null;
       const len = clampAndSnap(requestedLen, step, span);
-      const range = getMainWallRange(wall);
-      const pos = clampAndSnap(range.start + (span - len) / 2, range.start, range.end - len);
+      const segments = getWallSegments(wall).filter((seg) => seg.end - seg.start >= len);
+      if (segments.length === 0) return null;
+      const preferred = segments.reduce((best, seg) => {
+        if (!best) return seg;
+        return (seg.end - seg.start) > (best.end - best.start) ? seg : best;
+      }, null);
+      const pos = clampAndSnap(preferred.start + ((preferred.end - preferred.start) - len) / 2, preferred.start, preferred.end - len);
       return {
         id: "preview-wall",
         type: preset.key,
@@ -2476,7 +2691,7 @@
     }
 
     function computeSlideTrack(it) {
-      const range = getMainWallRange(it.wall);
+      const range = getSegmentForWallItem(it.wall, it.pos, it.len) || { start: it.pos, end: it.pos + it.len };
       const preferredDir = it.slideDir === -1 ? -1 : 1;
       const primary = preferredDir === 1
         ? { start: it.pos + it.len, end: it.pos + it.len * 2, dir: 1 }

@@ -157,6 +157,29 @@ def run_checks(page):
     assert page.input_value("#roomW") == "300"
     assert page.input_value("#roomH") == "320"
 
+    # room notch shape works
+    page.locator("summary", has_text="部屋の形を変える").click()
+    page.fill("#notchTopStart", "100")
+    page.fill("#notchTopLen", "80")
+    page.fill("#notchTopDepth", "60")
+    page.click("#applyShape")
+    notch_state = page.evaluate(
+        """() => ({
+          notch: state.room.notches.top,
+          insideNotchValid: isFurniturePlacementValid(110, 0, 30, 30),
+          insideRoomValid: isFurniturePlacementValid(0, 80, 30, 30),
+        })"""
+    )
+    assert notch_state["notch"]["len"] == 80 and notch_state["notch"]["depth"] == 60, (
+        f"top notch not applied: {notch_state}"
+    )
+    assert notch_state["insideNotchValid"] is False, f"notch area should be blocked: {notch_state}"
+    assert notch_state["insideRoomValid"] is True, f"regular area should remain usable: {notch_state}"
+    page.fill("#notchTopStart", "0")
+    page.fill("#notchTopLen", "0")
+    page.fill("#notchTopDepth", "0")
+    page.click("#applyShape")
+
     # add furniture and verify selection info
     desk_value = page.eval_on_selector(
         "#preset",
@@ -211,8 +234,24 @@ def run_checks(page):
           return opt ? opt.value : null;
         }""",
     )
+    fridge_value = page.eval_on_selector(
+        "#preset",
+        """(sel) => {
+          const opt = [...sel.options].find(o => o.textContent.includes(' / 冷蔵庫 ('));
+          return opt ? opt.value : null;
+        }""",
+    )
+    laundry_value = page.eval_on_selector(
+        "#preset",
+        """(sel) => {
+          const opt = [...sel.options].find(o => o.textContent.includes(' / 洗濯機置き場 ('));
+          return opt ? opt.value : null;
+        }""",
+    )
     assert kitchen_value is not None, "ミニキッチン option not found"
     assert sink_value is not None, "流し台 option not found"
+    assert fridge_value is not None, "冷蔵庫 option not found"
+    assert laundry_value is not None, "洗濯機置き場 option not found"
 
     # selection size edit reflect
     page.fill("#selW", "140")
