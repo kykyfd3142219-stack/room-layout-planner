@@ -160,8 +160,10 @@
     }
     .panel-inner {
       max-height: calc(100vh - 48px);
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
       padding-right: 2px;
+      min-width: 0;
     }
     .skip-link {
       position: absolute;
@@ -289,6 +291,11 @@
       padding: 8px 10px;
       background: #fff;
     }
+    select, input {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+    }
     input[type="file"] {
       padding: 6px 4px;
       font-size: 0.82rem;
@@ -364,11 +371,13 @@
     .list {
       margin-top: 12px;
       max-height: 240px;
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
       border: 1px solid #e5e7eb;
       border-radius: 8px;
       padding: 6px;
       background: #fafafa;
+      min-width: 0;
     }
     .item {
       display: flex;
@@ -378,12 +387,20 @@
       padding: 6px;
       border-bottom: 1px solid #eceff1;
       font-size: 0.85rem;
+      min-width: 0;
     }
     .item:last-child { border-bottom: none; }
+    .item span {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
     .item button {
       padding: 4px 8px;
       font-size: 0.8rem;
       background: #be123c;
+      flex: 0 0 auto;
+      white-space: normal;
     }
     .status {
       margin-top: 10px;
@@ -403,6 +420,8 @@
       color: #334155;
       line-height: 1.45;
       min-height: 3.1em;
+      min-width: 0;
+      overflow-x: hidden;
     }
     .selection-title {
       font-size: 0.84rem;
@@ -414,21 +433,30 @@
       margin-top: 8px;
       display: grid;
       gap: 8px;
+      min-width: 0;
     }
     .selection-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
+      min-width: 0;
+    }
+    .selection-grid > * {
+      min-width: 0;
     }
     .selection-actions {
       margin-top: 8px;
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
+      min-width: 0;
     }
     .selection-actions button {
       font-size: 0.78rem;
       padding: 7px 8px;
+      min-width: 0;
+      white-space: normal;
+      line-height: 1.25;
     }
     .template-grid {
       display: grid;
