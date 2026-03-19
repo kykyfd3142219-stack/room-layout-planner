@@ -767,6 +767,15 @@
                 たての長さ (cm)
                 <input id="roomH" type="number" min="150" max="1200" step="10" value="364" />
               </label>
+              <label class="snap-toggle" for="areaLock">
+                <input id="areaLock" type="checkbox" />
+                面積を固定する
+              </label>
+              <label>
+                保ちたい面積 (m²)
+                <input id="areaTarget" type="number" min="1" max="200" step="0.1" value="13.25" />
+              </label>
+              <p id="areaSummary" class="mini-help">今の面積: 13.25m²</p>
               <button id="applyRoom" class="cta-primary">この大きさにする</button>
               <div class="grid-tools">
                 <label class="snap-toggle" for="snapToggle">
@@ -1050,6 +1059,8 @@
       pendingNotice: "",
       gridCm: 10,
       snapEnabled: true,
+      areaLockEnabled: false,
+      areaTargetCm2: 132496,
       blocks: [
         {
           id: "block-1f",
@@ -1074,6 +1085,9 @@
 
     const roomWEl = document.getElementById("roomW");
     const roomHEl = document.getElementById("roomH");
+    const areaLockEl = document.getElementById("areaLock");
+    const areaTargetEl = document.getElementById("areaTarget");
+    const areaSummaryEl = document.getElementById("areaSummary");
     const roomTemplateButtonsEl = document.getElementById("roomTemplateButtons");
     const gridSizeEl = document.getElementById("gridSize");
     const snapToggleEl = document.getElementById("snapToggle");
@@ -1188,6 +1202,67 @@
           left: { offset: Number(safeNotches.left && safeNotches.left.offset) || 0, len: Number(safeNotches.left && safeNotches.left.len) || 0, depth: Number(safeNotches.left && safeNotches.left.depth) || 0 }
         }
       };
+    }
+
+    function getBlockedRectsForRoom(room) {
+      const safeRoom = normalizeRoomData(room);
+      const { width, height, cuts, notches } = safeRoom;
+      const rects = [];
+      if (cuts.tl.w > 0 && cuts.tl.h > 0) rects.push({ x1: 0, y1: 0, x2: cuts.tl.w, y2: cuts.tl.h });
+      if (cuts.tr.w > 0 && cuts.tr.h > 0) rects.push({ x1: width - cuts.tr.w, y1: 0, x2: width, y2: cuts.tr.h });
+      if (cuts.br.w > 0 && cuts.br.h > 0) rects.push({ x1: width - cuts.br.w, y1: height - cuts.br.h, x2: width, y2: height });
+      if (cuts.bl.w > 0 && cuts.bl.h > 0) rects.push({ x1: 0, y1: height - cuts.bl.h, x2: cuts.bl.w, y2: height });
+      if (notches.top.len > 0 && notches.top.depth > 0) rects.push({ x1: notches.top.offset, y1: 0, x2: notches.top.offset + notches.top.len, y2: notches.top.depth });
+      if (notches.right.len > 0 && notches.right.depth > 0) rects.push({ x1: width - notches.right.depth, y1: notches.right.offset, x2: width, y2: notches.right.offset + notches.right.len });
+      if (notches.bottom.len > 0 && notches.bottom.depth > 0) rects.push({ x1: notches.bottom.offset, y1: height - notches.bottom.depth, x2: notches.bottom.offset + notches.bottom.len, y2: height });
+      if (notches.left.len > 0 && notches.left.depth > 0) rects.push({ x1: 0, y1: notches.left.offset, x2: notches.left.depth, y2: notches.left.offset + notches.left.len });
+      return rects;
+    }
+
+    function rectUnionArea(rects) {
+      const filtered = rects.filter((r) => r.x2 > r.x1 && r.y2 > r.y1);
+      if (filtered.length === 0) return 0;
+      const xs = Array.from(new Set(filtered.flatMap((r) => [r.x1, r.x2]))).sort((a, b) => a - b);
+      const ys = Array.from(new Set(filtered.flatMap((r) => [r.y1, r.y2]))).sort((a, b) => a - b);
+      let area = 0;
+      for (let xi = 0; xi < xs.length - 1; xi++) {
+        for (let yi = 0; yi < ys.length - 1; yi++) {
+          const cell = { x1: xs[xi], y1: ys[yi], x2: xs[xi + 1], y2: ys[yi + 1] };
+          if (filtered.some((r) => r.x1 < cell.x2 && r.x2 > cell.x1 && r.y1 < cell.y2 && r.y2 > cell.y1)) {
+            area += (cell.x2 - cell.x1) * (cell.y2 - cell.y1);
+          }
+        }
+      }
+      return area;
+    }
+
+    function computeRoomAreaCm2(room = state.room) {
+      const safeRoom = normalizeRoomData(room);
+      const outerArea = safeRoom.width * safeRoom.height;
+      const blockedArea = rectUnionArea(getBlockedRectsForRoom(safeRoom));
+      return Math.max(0, outerArea - blockedArea);
+    }
+
+    function formatAreaSqm(cm2) {
+      return (cm2 / 10000).toFixed(2);
+    }
+
+    function syncAreaUI() {
+      const currentAreaCm2 = computeRoomAreaCm2(state.room);
+      if (!Number.isFinite(state.areaTargetCm2) || state.areaTargetCm2 <= 0) {
+        state.areaTargetCm2 = currentAreaCm2;
+      }
+      if (!state.areaLockEnabled) {
+        state.areaTargetCm2 = currentAreaCm2;
+      }
+      areaLockEl.checked = state.areaLockEnabled;
+      areaTargetEl.disabled = activeBlockLocked() || !state.areaLockEnabled;
+      if (document.activeElement !== areaTargetEl) {
+        areaTargetEl.value = formatAreaSqm(state.areaTargetCm2);
+      }
+      areaSummaryEl.textContent = state.areaLockEnabled
+        ? `今の面積: ${formatAreaSqm(currentAreaCm2)}m² / 固定面積: ${formatAreaSqm(state.areaTargetCm2)}m²`
+        : `今の面積: ${formatAreaSqm(currentAreaCm2)}m²`;
     }
 
     function getActiveBlock() {
@@ -1771,7 +1846,9 @@
         activeBlockId: state.activeBlockId,
         selected: state.selected,
         gridCm: state.gridCm,
-        snapEnabled: state.snapEnabled
+        snapEnabled: state.snapEnabled,
+        areaLockEnabled: state.areaLockEnabled,
+        areaTargetCm2: state.areaTargetCm2
       });
     }
 
@@ -1779,6 +1856,8 @@
       if (snapshot && Array.isArray(snapshot.blocks) && snapshot.blocks.length > 0) {
         state.gridCm = [5, 10, 25].includes(Number(snapshot.gridCm)) ? Number(snapshot.gridCm) : 10;
         state.snapEnabled = snapshot.snapEnabled !== false;
+        state.areaLockEnabled = snapshot.areaLockEnabled === true;
+        state.areaTargetCm2 = Number(snapshot.areaTargetCm2) > 0 ? Number(snapshot.areaTargetCm2) : state.areaTargetCm2;
         state.blocks = deepCopy(snapshot.blocks).map((b, index) => {
           const fallbackType = index === 0 ? "1f" : `block-${index}`;
           const type = b.type || fallbackType;
@@ -1819,6 +1898,8 @@
         ];
         state.gridCm = 10;
         state.snapEnabled = true;
+        state.areaLockEnabled = false;
+        state.areaTargetCm2 = 132496;
         normalizeStructureBlocks();
         loadBlockState("block-1f", false);
         state.selected = snapshot && snapshot.selected ? snapshot.selected : null;
@@ -1971,7 +2052,7 @@
     function syncEditingLockUI() {
       const locked = activeBlockLocked();
       const controls = [
-        roomWEl, roomHEl, applyRoomEl,
+        roomWEl, roomHEl, areaLockEl, areaTargetEl, applyRoomEl,
         cutTLWEl, cutTLHEl, cutTRWEl, cutTRHEl, cutBRWEl, cutBRHEl, cutBLWEl, cutBLHEl,
         notchTopStartEl, notchTopLenEl, notchTopDepthEl,
         notchRightStartEl, notchRightLenEl, notchRightDepthEl,
@@ -1992,6 +2073,7 @@
       for (const input of selectionEditorEl.querySelectorAll("input,select,button,textarea")) {
         input.disabled = locked;
       }
+      areaTargetEl.disabled = locked || !state.areaLockEnabled;
       rotateEl.disabled = locked || !(state.selected && state.selected.kind === "item");
       duplicateItemEl.disabled = locked || !(state.selected && state.selected.kind === "item");
       applySelectionEl.disabled = locked || !state.selected;
@@ -2122,6 +2204,20 @@
       state.snapEnabled = !!snapToggleEl.checked;
       if (!activeBlockLocked()) normalizeToRoom();
       update();
+      saveToLocalStorage();
+    }
+
+    function handleAreaLockChange() {
+      state.areaLockEnabled = !!areaLockEl.checked;
+      state.areaTargetCm2 = state.areaLockEnabled ? readAreaTargetCm2() : computeRoomAreaCm2(state.room);
+      syncAreaUI();
+      saveToLocalStorage();
+    }
+
+    function handleAreaTargetChange() {
+      if (!state.areaLockEnabled) return;
+      state.areaTargetCm2 = readAreaTargetCm2();
+      syncAreaUI();
       saveToLocalStorage();
     }
 
@@ -2413,6 +2509,52 @@
       }
     }
 
+    function readAreaTargetCm2() {
+      const rawSqm = Number(areaTargetEl.value);
+      if (Number.isFinite(rawSqm) && rawSqm > 0) {
+        return rawSqm * 10000;
+      }
+      return computeRoomAreaCm2(state.room);
+    }
+
+    function buildAreaLockedRoom(scale, rawCuts, rawNotches) {
+      const width = snap(clamp(state.room.width * scale, 150, 1200));
+      const height = snap(clamp(state.room.height * scale, 150, 1200));
+      const cuts = normalizeCuts(rawCuts, width, height);
+      const notches = normalizeNotches(rawNotches, width, height, cuts);
+      const room = { width, height, cuts, notches };
+      return {
+        room,
+        areaCm2: computeRoomAreaCm2(room)
+      };
+    }
+
+    function fitShapeToTargetArea(rawCuts, rawNotches, targetAreaCm2) {
+      let low = 0.35;
+      let high = 4;
+      let best = null;
+
+      const consider = (scale) => {
+        const candidate = buildAreaLockedRoom(scale, rawCuts, rawNotches);
+        const diff = Math.abs(candidate.areaCm2 - targetAreaCm2);
+        if (!best || diff < best.diff) {
+          best = { ...candidate, diff };
+        }
+        return candidate;
+      };
+
+      consider(low);
+      consider(1);
+      consider(high);
+      for (let i = 0; i < 36; i++) {
+        const mid = (low + high) / 2;
+        const candidate = consider(mid);
+        if (candidate.areaCm2 < targetAreaCm2) low = mid;
+        else high = mid;
+      }
+      return best;
+    }
+
     function applyRoomSize() {
       if (!ensureEditable("部屋の大きさを変えること")) return;
       const width = Number(roomWEl.value);
@@ -2446,16 +2588,34 @@
       const normalizedCuts = normalizeCuts(rawCuts, state.room.width, state.room.height);
       const rawNotches = readNotchesFromInputs();
       const normalizedNotches = normalizeNotches(rawNotches, state.room.width, state.room.height, normalizedCuts);
+      const targetAreaCm2 = state.areaLockEnabled ? readAreaTargetCm2() : computeRoomAreaCm2(state.room);
+      const currentAreaCm2 = computeRoomAreaCm2(state.room);
+      const areaNeedsAdjust = state.areaLockEnabled && Math.abs(targetAreaCm2 - currentAreaCm2) > 50;
       if (
         JSON.stringify(normalizedCuts) === JSON.stringify(state.room.cuts)
         && JSON.stringify(normalizedNotches) === JSON.stringify(state.room.notches)
+        && !areaNeedsAdjust
       ) {
         setStatus("部屋の形は変わっていません。");
         return;
       }
       rememberCurrentState();
-      state.room.cuts = normalizedCuts;
-      state.room.notches = normalizedNotches;
+      if (state.areaLockEnabled) {
+        state.areaTargetCm2 = targetAreaCm2;
+        const fitted = fitShapeToTargetArea(rawCuts, rawNotches, targetAreaCm2);
+        state.room.width = fitted.room.width;
+        state.room.height = fitted.room.height;
+        state.room.cuts = fitted.room.cuts;
+        state.room.notches = fitted.room.notches;
+        roomWEl.value = String(state.room.width);
+        roomHEl.value = String(state.room.height);
+        state.pendingNotice = Math.abs(fitted.areaCm2 - targetAreaCm2) > 200
+          ? `目標面積にできるだけ近づくように、部屋の大きさを自動で調整しました。`
+          : `面積を保つために、部屋の大きさも自動で調整しました。`;
+      } else {
+        state.room.cuts = normalizedCuts;
+        state.room.notches = normalizedNotches;
+      }
       setShapeInputsFromState();
       normalizeToRoom();
       update();
@@ -3063,6 +3223,7 @@
       renderList();
       updateSelectionInfo();
       syncEditingLockUI();
+      syncAreaUI();
       updateHistoryButtons();
       const active = getActiveBlock();
       gridInfoEl.textContent = `見えている場所をまとめて表示 / マス: ${currentGridCm()}cm / まっすぐ置く: ${state.snapEnabled ? "する" : "しない"}`;
@@ -3671,6 +3832,9 @@
     applyShapeEl.addEventListener("click", applyRoomShape);
     gridSizeEl.addEventListener("change", applyGridSettings);
     snapToggleEl.addEventListener("change", applyGridSettings);
+    areaLockEl.addEventListener("change", handleAreaLockChange);
+    areaTargetEl.addEventListener("change", handleAreaTargetChange);
+    areaTargetEl.addEventListener("blur", handleAreaTargetChange);
     applySelectionEl.addEventListener("click", applySelectionEdits);
     duplicateSelectedEl.addEventListener("click", duplicateSelectedFurniture);
     deleteSelectedBtnEl.addEventListener("click", removeSelected);
@@ -3725,6 +3889,7 @@
     window.addEventListener("resize", syncTopOffset);
     gridSizeEl.value = String(state.gridCm);
     snapToggleEl.checked = state.snapEnabled;
+    syncAreaUI();
     loadBlockState("block-1f");
     applyPreset();
     applyWallPreset();

@@ -157,8 +157,14 @@ def run_checks(page):
     assert page.input_value("#roomW") == "300"
     assert page.input_value("#roomH") == "320"
 
-    # room notch shape works
+    # room notch shape works, and area can stay nearly fixed while shape changes
     page.locator("summary", has_text="部屋の形を変える").click()
+    page.select_option("#gridSize", value="5")
+    base_area = page.evaluate("() => computeRoomAreaCm2(state.room)")
+    page.check("#areaLock")
+    page.fill("#areaTarget", f"{base_area / 10000:.2f}")
+    page.locator("#areaTarget").blur()
+    expect(page.locator("#areaSummary")).to_contain_text("固定面積")
     page.fill("#notchTopStart", "100")
     page.fill("#notchTopLen", "80")
     page.fill("#notchTopDepth", "60")
@@ -168,6 +174,9 @@ def run_checks(page):
           notch: state.room.notches.top,
           insideNotchValid: isFurniturePlacementValid(110, 0, 30, 30),
           insideRoomValid: isFurniturePlacementValid(0, 80, 30, 30),
+          areaCm2: computeRoomAreaCm2(state.room),
+          width: state.room.width,
+          height: state.room.height,
         })"""
     )
     assert notch_state["notch"]["len"] == 80 and notch_state["notch"]["depth"] == 60, (
@@ -175,10 +184,20 @@ def run_checks(page):
     )
     assert notch_state["insideNotchValid"] is False, f"notch area should be blocked: {notch_state}"
     assert notch_state["insideRoomValid"] is True, f"regular area should remain usable: {notch_state}"
+    assert abs(notch_state["areaCm2"] - base_area) <= 1800, (
+        f"area lock drifted too much: base={base_area} now={notch_state['areaCm2']} state={notch_state}"
+    )
+    assert (notch_state["width"], notch_state["height"]) != (300, 320), (
+        f"room size should auto-adjust when area is locked: {notch_state}"
+    )
     page.fill("#notchTopStart", "0")
     page.fill("#notchTopLen", "0")
     page.fill("#notchTopDepth", "0")
     page.click("#applyShape")
+    page.uncheck("#areaLock")
+    page.fill("#roomW", "300")
+    page.fill("#roomH", "320")
+    page.click("#applyRoom")
 
     # add furniture and verify selection info
     desk_value = page.eval_on_selector(
