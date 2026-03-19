@@ -1883,6 +1883,8 @@
           const type = b.type || fallbackType;
           const label = b.label || blockLabelByType(type, index);
           const room = normalizeRoomData(b.room);
+          const hasAreaLock = Object.prototype.hasOwnProperty.call(b, "areaLockEnabled");
+          const hasAreaTarget = Object.prototype.hasOwnProperty.call(b, "areaTargetCm2");
           return {
             id: b.id || crypto.randomUUID(),
             type,
@@ -1890,10 +1892,10 @@
             room,
             items: Array.isArray(b.items) ? b.items : [],
             wallItems: Array.isArray(b.wallItems) ? b.wallItems.map((it) => normalizeLegacyWallItem(it)) : [],
-            areaLockEnabled: b.areaLockEnabled === true ? true : snapshot.areaLockEnabled === true,
-            areaTargetCm2: Number(b.areaTargetCm2) > 0
+            areaLockEnabled: hasAreaLock ? b.areaLockEnabled === true : snapshot.areaLockEnabled === true,
+            areaTargetCm2: hasAreaTarget && Number(b.areaTargetCm2) > 0
               ? Number(b.areaTargetCm2)
-              : (Number(snapshot.areaTargetCm2) > 0 ? Number(snapshot.areaTargetCm2) : defaultAreaTargetForRoom(room)),
+              : (!hasAreaTarget && Number(snapshot.areaTargetCm2) > 0 ? Number(snapshot.areaTargetCm2) : defaultAreaTargetForRoom(room)),
             visible: b.visible !== false,
             locked: b.locked === true
           };

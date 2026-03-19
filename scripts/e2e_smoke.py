@@ -289,6 +289,65 @@ def run_checks(page):
         f"1f room should stay unchanged after 2f edits: {first_floor_returned}"
     )
 
+    page.reload(wait_until="domcontentloaded")
+    tutorial_btn = page.locator("#closeTutorial")
+    if tutorial_btn.is_visible(timeout=500):
+        tutorial_btn.click()
+    page.evaluate(
+        """() => {
+          const block = state.blocks.find((b) => b.type === '1f');
+          switchToBlock(block.id);
+        }"""
+    )
+    persisted_first_floor = page.evaluate(
+        """() => ({
+          areaLockEnabled: state.areaLockEnabled,
+          areaTargetCm2: state.areaTargetCm2,
+          currentAreaCm2: computeRoomAreaCm2(state.room),
+          room: { w: state.room.width, h: state.room.height },
+        })"""
+    )
+    assert persisted_first_floor["areaLockEnabled"] is True, (
+        f"1f area lock should persist after reload: {persisted_first_floor}"
+    )
+    assert persisted_first_floor["areaTargetCm2"] == persisted_first_floor["currentAreaCm2"] == 144000, (
+        f"1f area target should persist after reload: {persisted_first_floor}"
+    )
+    assert persisted_first_floor["room"]["w"] == 360 and persisted_first_floor["room"]["h"] == 400, (
+        f"1f room should persist after reload: {persisted_first_floor}"
+    )
+
+    page.evaluate(
+        """() => {
+          const block = state.blocks.find((b) => b.type === '2f');
+          switchToBlock(block.id);
+        }"""
+    )
+    persisted_second_floor = page.evaluate(
+        """() => ({
+          areaLockEnabled: state.areaLockEnabled,
+          areaTargetCm2: state.areaTargetCm2,
+          currentAreaCm2: computeRoomAreaCm2(state.room),
+          room: { w: state.room.width, h: state.room.height },
+        })"""
+    )
+    assert persisted_second_floor["areaLockEnabled"] is False, (
+        f"2f unlocked state should persist after reload: {persisted_second_floor}"
+    )
+    assert persisted_second_floor["areaTargetCm2"] == persisted_second_floor["currentAreaCm2"] == 240000, (
+        f"2f area should persist after reload: {persisted_second_floor}"
+    )
+    assert persisted_second_floor["room"]["w"] == 500 and persisted_second_floor["room"]["h"] == 480, (
+        f"2f room should persist after reload: {persisted_second_floor}"
+    )
+
+    page.evaluate(
+        """() => {
+          const block = state.blocks.find((b) => b.type === '1f');
+          switchToBlock(block.id);
+        }"""
+    )
+
     # add furniture and verify selection info
     desk_value = page.eval_on_selector(
         "#preset",
