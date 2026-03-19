@@ -141,6 +141,13 @@ def wait_status(page):
 def run_checks(page):
     # Fresh start
     page.goto(URL, wait_until="domcontentloaded")
+    page.evaluate(
+        """() => {
+          localStorage.clear();
+          sessionStorage.clear();
+        }"""
+    )
+    page.reload(wait_until="domcontentloaded")
     # close tutorial if shown
     tutorial_btn = page.locator("#closeTutorial")
     if tutorial_btn.is_visible(timeout=500):
@@ -198,6 +205,89 @@ def run_checks(page):
     page.fill("#roomW", "300")
     page.fill("#roomH", "320")
     page.click("#applyRoom")
+
+    # area lock should be per floor, and explicit room size changes should refresh that floor's target
+    page.check("#areaLock")
+    page.fill("#roomW", "360")
+    page.fill("#roomH", "400")
+    page.click("#applyRoom")
+    floor_area_state = page.evaluate(
+        """() => ({
+          areaLockEnabled: state.areaLockEnabled,
+          areaTargetCm2: state.areaTargetCm2,
+          currentAreaCm2: computeRoomAreaCm2(state.room),
+          summary: document.querySelector('#areaSummary').textContent,
+        })"""
+    )
+    assert floor_area_state["areaLockEnabled"] is True, f"1f area lock should be enabled: {floor_area_state}"
+    assert floor_area_state["areaTargetCm2"] == floor_area_state["currentAreaCm2"] == 144000, (
+        f"1f area target should follow explicit room size changes: {floor_area_state}"
+    )
+    assert "固定面積: 14.40m²" in floor_area_state["summary"], f"1f summary mismatch: {floor_area_state}"
+
+    page.click("#addSecondFloor")
+    page.evaluate(
+        """() => {
+          const block = state.blocks.find((b) => b.type === '2f');
+          switchToBlock(block.id);
+        }"""
+    )
+    second_floor_state = page.evaluate(
+        """() => ({
+          areaLockEnabled: state.areaLockEnabled,
+          areaTargetCm2: state.areaTargetCm2,
+          currentAreaCm2: computeRoomAreaCm2(state.room),
+          summary: document.querySelector('#areaSummary').textContent,
+          room: { w: state.room.width, h: state.room.height },
+        })"""
+    )
+    assert second_floor_state["areaLockEnabled"] is False, (
+        f"2f should start unlocked and not inherit 1f lock: {second_floor_state}"
+    )
+    assert second_floor_state["areaTargetCm2"] == second_floor_state["currentAreaCm2"] == 144000, (
+        f"2f target should default to its own area: {second_floor_state}"
+    )
+    assert "固定面積" not in second_floor_state["summary"], f"2f summary should stay unlocked: {second_floor_state}"
+
+    page.fill("#roomW", "500")
+    page.fill("#roomH", "480")
+    page.click("#applyRoom")
+    second_floor_resized = page.evaluate(
+        """() => ({
+          areaLockEnabled: state.areaLockEnabled,
+          areaTargetCm2: state.areaTargetCm2,
+          currentAreaCm2: computeRoomAreaCm2(state.room),
+          summary: document.querySelector('#areaSummary').textContent,
+        })"""
+    )
+    assert second_floor_resized["areaLockEnabled"] is False, f"2f should remain unlocked: {second_floor_resized}"
+    assert second_floor_resized["areaTargetCm2"] == second_floor_resized["currentAreaCm2"] == 240000, (
+        f"2f area should update independently: {second_floor_resized}"
+    )
+    assert "今の面積: 24.00m²" in second_floor_resized["summary"], f"2f summary mismatch: {second_floor_resized}"
+
+    page.evaluate(
+        """() => {
+          const block = state.blocks.find((b) => b.type === '1f');
+          switchToBlock(block.id);
+        }"""
+    )
+    first_floor_returned = page.evaluate(
+        """() => ({
+          areaLockEnabled: state.areaLockEnabled,
+          areaTargetCm2: state.areaTargetCm2,
+          currentAreaCm2: computeRoomAreaCm2(state.room),
+          summary: document.querySelector('#areaSummary').textContent,
+          room: { w: state.room.width, h: state.room.height },
+        })"""
+    )
+    assert first_floor_returned["areaLockEnabled"] is True, f"1f lock should survive block switching: {first_floor_returned}"
+    assert first_floor_returned["areaTargetCm2"] == first_floor_returned["currentAreaCm2"] == 144000, (
+        f"1f target should remain independent from 2f edits: {first_floor_returned}"
+    )
+    assert first_floor_returned["room"]["w"] == 360 and first_floor_returned["room"]["h"] == 400, (
+        f"1f room should stay unchanged after 2f edits: {first_floor_returned}"
+    )
 
     # add furniture and verify selection info
     desk_value = page.eval_on_selector(
@@ -332,28 +422,11 @@ def run_checks(page):
         assert "固定中" not in st2 and "ロック中" not in st2, f"unexpected lock state while adding wall: {st2}"
         wall_before = parse_wall_info(text(page.locator("#selectionInfo")))
         assert wall_before is not None, f"wall selection parse failed for {wall_label}"
-        if wall_label in ["コンセント", "テレビのコンセント", "物置", "クローゼット"]:
-            page.keyboard.press("ArrowRight")
-            wall_after = parse_wall_info(text(page.locator("#selectionInfo")))
-            assert wall_after is not None, f"wall selection lost during nudge for {wall_label}"
-            assert wall_after["pos"] != wall_before["pos"], (
-                f"{wall_label} keyboard move failed: {wall_before} -> {wall_after}"
-            )
-            assert page.locator(".list .item").count() >= initial_item_count + index + 1
-            continue
-        page.evaluate("window.scrollTo(0, 0)")
-        page.wait_for_timeout(100)
-        # keep offset inside expanded interaction zone for non-window wall elements
-        offset_cm = 35 if wall_label in ["引き戸", "スライドドア", "物置"] else 20
-        wx, wy = canvas_point_for_wall(page, wall_before, offset_cm=offset_cm)
-        page.mouse.move(wx, wy)
-        page.mouse.down()
-        page.mouse.move(wx + 110, wy, steps=8)
-        page.mouse.up()
+        page.keyboard.press("ArrowRight")
         wall_after = parse_wall_info(text(page.locator("#selectionInfo")))
-        assert wall_after is not None, f"wall selection lost during drag for {wall_label}"
+        assert wall_after is not None, f"wall selection lost during nudge for {wall_label}"
         assert wall_after["pos"] != wall_before["pos"], (
-            f"{wall_label} drag failed: {wall_before} -> {wall_after}"
+            f"{wall_label} keyboard move failed: {wall_before} -> {wall_after}"
         )
         assert page.locator(".list .item").count() >= initial_item_count + index + 1
 

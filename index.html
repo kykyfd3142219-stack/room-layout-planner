@@ -1069,6 +1069,8 @@
           room: createDefaultRoom(),
           items: [],
           wallItems: [],
+          areaLockEnabled: false,
+          areaTargetCm2: 132496,
           visible: true,
           locked: false
         }
@@ -1287,6 +1289,8 @@
       block.room = deepCopy(state.room);
       block.items = deepCopy(state.items);
       block.wallItems = deepCopy(state.wallItems);
+      block.areaLockEnabled = state.areaLockEnabled === true;
+      block.areaTargetCm2 = Number(state.areaTargetCm2) > 0 ? Number(state.areaTargetCm2) : computeRoomAreaCm2(state.room);
     }
 
     function loadBlockState(blockId, resetSelection = true) {
@@ -1298,6 +1302,8 @@
       state.room.notches = normalizeNotches(state.room.notches, state.room.width, state.room.height, state.room.cuts);
       state.items = deepCopy(block.items || []);
       state.wallItems = deepCopy(block.wallItems || []);
+      state.areaLockEnabled = block.areaLockEnabled === true;
+      state.areaTargetCm2 = Number(block.areaTargetCm2) > 0 ? Number(block.areaTargetCm2) : computeRoomAreaCm2(state.room);
       state.drag = null;
       if (resetSelection) state.selected = null;
       roomWEl.value = String(state.room.width);
@@ -1338,6 +1344,10 @@
       };
     }
 
+    function defaultAreaTargetForRoom(room) {
+      return computeRoomAreaCm2(normalizeRoomData(room));
+    }
+
     function isCoreBlockType(type) {
       return type === "1f" || type === "2f" || type === "loft" || type === "balcony";
     }
@@ -1368,6 +1378,10 @@
         }
         block.visible = block.visible !== false;
         block.locked = block.locked === true;
+        block.areaLockEnabled = block.areaLockEnabled === true;
+        block.areaTargetCm2 = Number(block.areaTargetCm2) > 0
+          ? Number(block.areaTargetCm2)
+          : defaultAreaTargetForRoom(block.room);
         extras.push(block);
       }
 
@@ -1380,6 +1394,8 @@
           room: createDefaultRoom(),
           items: [],
           wallItems: [],
+          areaLockEnabled: false,
+          areaTargetCm2: 132496,
           visible: true,
           locked: false
         };
@@ -1405,6 +1421,10 @@
         }
         block.visible = block.visible !== false;
         block.locked = block.locked === true;
+        block.areaLockEnabled = block.areaLockEnabled === true;
+        block.areaTargetCm2 = Number(block.areaTargetCm2) > 0
+          ? Number(block.areaTargetCm2)
+          : defaultAreaTargetForRoom(block.room);
         typed.push(block);
       }
 
@@ -1441,6 +1461,8 @@
         room: defaultRoomForStructure(type),
         items: [],
         wallItems: [],
+        areaLockEnabled: false,
+        areaTargetCm2: defaultAreaTargetForRoom(defaultRoomForStructure(type)),
         visible: true,
         locked: false
       };
@@ -1856,19 +1878,22 @@
       if (snapshot && Array.isArray(snapshot.blocks) && snapshot.blocks.length > 0) {
         state.gridCm = [5, 10, 25].includes(Number(snapshot.gridCm)) ? Number(snapshot.gridCm) : 10;
         state.snapEnabled = snapshot.snapEnabled !== false;
-        state.areaLockEnabled = snapshot.areaLockEnabled === true;
-        state.areaTargetCm2 = Number(snapshot.areaTargetCm2) > 0 ? Number(snapshot.areaTargetCm2) : state.areaTargetCm2;
         state.blocks = deepCopy(snapshot.blocks).map((b, index) => {
           const fallbackType = index === 0 ? "1f" : `block-${index}`;
           const type = b.type || fallbackType;
           const label = b.label || blockLabelByType(type, index);
+          const room = normalizeRoomData(b.room);
           return {
             id: b.id || crypto.randomUUID(),
             type,
             label,
-            room: normalizeRoomData(b.room),
+            room,
             items: Array.isArray(b.items) ? b.items : [],
             wallItems: Array.isArray(b.wallItems) ? b.wallItems.map((it) => normalizeLegacyWallItem(it)) : [],
+            areaLockEnabled: b.areaLockEnabled === true ? true : snapshot.areaLockEnabled === true,
+            areaTargetCm2: Number(b.areaTargetCm2) > 0
+              ? Number(b.areaTargetCm2)
+              : (Number(snapshot.areaTargetCm2) > 0 ? Number(snapshot.areaTargetCm2) : defaultAreaTargetForRoom(room)),
             visible: b.visible !== false,
             locked: b.locked === true
           };
@@ -1892,14 +1917,16 @@
             wallItems: Array.isArray(snapshot && snapshot.wallItems)
               ? snapshot.wallItems.map((it) => normalizeLegacyWallItem(it))
               : [],
+            areaLockEnabled: snapshot && snapshot.areaLockEnabled === true,
+            areaTargetCm2: Number(snapshot && snapshot.areaTargetCm2) > 0
+              ? Number(snapshot.areaTargetCm2)
+              : defaultAreaTargetForRoom(legacyRoom),
             visible: true,
             locked: false
           }
         ];
         state.gridCm = 10;
         state.snapEnabled = true;
-        state.areaLockEnabled = false;
-        state.areaTargetCm2 = 132496;
         normalizeStructureBlocks();
         loadBlockState("block-1f", false);
         state.selected = snapshot && snapshot.selected ? snapshot.selected : null;
@@ -2241,6 +2268,9 @@
       const nextNotches = template.notches ? deepCopy(template.notches) : createZeroNotches();
       state.room.cuts = normalizeCuts(nextCuts, state.room.width, state.room.height);
       state.room.notches = normalizeNotches(nextNotches, state.room.width, state.room.height, state.room.cuts);
+      if (state.areaLockEnabled) {
+        state.areaTargetCm2 = computeRoomAreaCm2(state.room);
+      }
       roomWEl.value = String(state.room.width);
       roomHEl.value = String(state.room.height);
       setShapeInputsFromState();
@@ -2574,6 +2604,9 @@
       state.room.height = nextH;
       state.room.cuts = normalizeCuts(state.room.cuts, state.room.width, state.room.height);
       state.room.notches = normalizeNotches(state.room.notches, state.room.width, state.room.height, state.room.cuts);
+      if (state.areaLockEnabled) {
+        state.areaTargetCm2 = computeRoomAreaCm2(state.room);
+      }
       roomWEl.value = String(state.room.width);
       roomHEl.value = String(state.room.height);
       setShapeInputsFromState();
