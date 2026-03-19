@@ -509,6 +509,47 @@ def run_checks(page):
         f"door warning not shown: {warning_status}"
     )
 
+    # wall items should stay visually above overlapping furniture
+    page.once("dialog", lambda d: d.accept())
+    page.click("#clear")
+    page.select_option("#wallType", label="物置")
+    page.select_option("#wallSide", value="top")
+    page.fill("#wallLen", "100")
+    page.click("#addWall")
+    storage_state = page.evaluate(
+        """() => {
+          const wall = selectedWall();
+          return { pos: wall.pos, len: wall.len };
+        }"""
+    )
+    page.fill("#w", "80")
+    page.fill("#h", "60")
+    page.click("#add")
+    page.fill("#selX", str(storage_state["pos"] + 10))
+    page.fill("#selY", "0")
+    page.click("#applySelection")
+    overlap_sample = page.evaluate(
+        """({ sampleX, sampleY }) => {
+          const viewport = viewportByBlockId(state.activeBlockId);
+          const metrics = getMetrics(viewport);
+          const px = Math.round(metrics.left + sampleX * metrics.scale);
+          const py = Math.round(metrics.top + sampleY * metrics.scale);
+          const data = ctx.getImageData(px, py, 1, 1).data;
+          const wallColor = [161, 98, 7];
+          const itemColor = [34, 197, 94];
+          const dist = (a, b) => Math.sqrt(a.reduce((sum, value, index) => sum + ((value - b[index]) ** 2), 0));
+          return {
+            rgba: [data[0], data[1], data[2], data[3]],
+            wallDistance: dist([data[0], data[1], data[2]], wallColor),
+            itemDistance: dist([data[0], data[1], data[2]], itemColor),
+          };
+        }""",
+        {"sampleX": storage_state["pos"] + 40, "sampleY": 40},
+    )
+    assert overlap_sample["wallDistance"] < overlap_sample["itemDistance"], (
+        f"wall item should render above furniture when overlapping: {overlap_sample}"
+    )
+
     # non-door wall elements should not trigger the same warning
     page.once("dialog", lambda d: d.accept())
     page.click("#clear")
